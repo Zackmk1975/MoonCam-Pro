@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#090b13">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MoonCam Pro">
+  <meta name="description" content="MoonCam Pro – quay video camera trực tiếp, chụp ảnh và lưu video trên iPhone.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <title>MoonCam Pro · Camera Studio</title>
+  <style>
+    :root{color-scheme:dark;--bg:#090b13;--surface:#151926;--surface2:#1b2130;--border:#303648;--text:#f7f8fc;--muted:#9ca5b6;--accent:#b2a4ff;--accent2:#5cd9dc;--red:#ff555f;--green:#7be2b2;--r:20px;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{margin:0;background:radial-gradient(ellipse 70% 30% at 50% -10%,#252344 0%,transparent 80%),var(--bg);color:var(--text);min-height:100dvh}
+    button,select,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.35;cursor:not-allowed}
+    .shell{width:min(100%,600px);min-height:100dvh;margin:0 auto;padding:max(env(safe-area-inset-top),18px) 18px max(env(safe-area-inset-bottom),22px);display:flex;flex-direction:column;gap:16px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 2px 0}
+    .identity{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;display:grid;place-items:center;border-radius:15px;background:linear-gradient(145deg,#b5a7ff,#5e58b5);box-shadow:0 10px 32px #8c76ff38;color:#0c0921}
+    .identity strong{font-size:17px;font-weight:790;letter-spacing:-.7px;display:block}.identity strong span{color:var(--accent)}.identity small{display:block;color:var(--muted);font-size:10px;letter-spacing:2px;margin-top:3px;font-weight:700}
+    .iconBtn{width:42px;height:42px;flex:none;display:grid;place-items:center;border:1px solid var(--border);border-radius:14px;background:#ffffff0a;color:#e5e9f7}
+    svg{width:21px;height:21px;stroke:currentColor;stroke-width:1.75;fill:none;stroke-linecap:round;stroke-linejoin:round}
+    .tabs{display:flex;align-items:center;gap:5px;background:#191c29;padding:5px;border-radius:16px;border:1px solid #303141;width:max-content;max-width:100%}.tab{border:0;background:transparent;color:#9fa7b8;border-radius:12px;padding:11px 16px;font-size:13px;font-weight:740;display:flex;align-items:center;gap:8px}.tab.active{color:white;background:#393652;box-shadow:0 3px 12px #0005}.tab svg{height:17px;width:17px}
+    .view{display:none;min-width:0}.view.active{display:block}
+    .cameraShell{position:relative;overflow:hidden;border-radius:25px;border:1px solid #3a4055;background:#101420;isolation:isolate;height:clamp(390px,56dvh,660px);box-shadow:0 20px 45px #0008}
+    #cameraPreview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#06080f;z-index:1}
+    .noCamera{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse 70% 42% at 50% 28%,#272d4d 0%,#0f1526 60%,#0c101c 100%);text-align:center;padding:30px;gap:11px;z-index:2;transition:opacity .25s}
+    .noCamera.hidden{opacity:0;visibility:hidden;pointer-events:none}.moon{width:115px;height:115px;border-radius:50%;margin-bottom:15px;background:radial-gradient(circle at 38% 40%,#c8c6cf 0%,#9696ad 32%,#555a79 75%,#454866 100%);box-shadow:0 0 50px #9697eb2d,0 0 0 24px #ffffff04,0 0 0 54px #ffffff02;position:relative;overflow:hidden}
+    .moon:after{content:"";position:absolute;inset:10%;border-radius:50%;opacity:.34;background:radial-gradient(circle at 30% 20%,#222541 0 5%,transparent 6%),radial-gradient(circle at 60% 62%,#2a2d48 0 10%,transparent 11%),radial-gradient(circle at 20% 65%,#30314d 0 8%,transparent 9%),radial-gradient(circle at 80% 32%,#30314d 0 6%,transparent 7%)}
+    .noCamera h2{font-size:19px;letter-spacing:-.6px;margin:4px 0 0}.noCamera p{font-size:13px;color:#b8bfd0;line-height:1.6;max-width:270px;margin:0}.startCamera{background:#c5bbff;color:#18152c;border:0;padding:12px 18px;border-radius:13px;font-size:13px;font-weight:850;margin-top:10px}
+    .camTop{position:absolute;inset:0 0 auto;z-index:3;padding:17px 15px 45px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;background:linear-gradient(#0009,transparent)}
+    .pill{background:#0a0e1fbd;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid #ffffff23;border-radius:10px;padding:9px 11px;font-size:11px;display:flex;align-items:center;gap:7px;font-weight:800;letter-spacing:.65px}
+    .pill .dot{height:7px;width:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px #7be2b2}.pill.record .dot{background:var(--red);box-shadow:0 0 10px #ff555f;animation:blink 1s infinite}@keyframes blink{50%{opacity:.25}}
+    .timercap{color:#e6e9f8;font-variant-numeric:tabular-nums;font-feature-settings:'tnum';font-size:12px}
+    .camBottom{position:absolute;inset:auto 0 0;z-index:3;pointer-events:none;display:flex;justify-content:space-between;align-items:end;padding:65px 17px 18px;background:linear-gradient(transparent,#070910d4);font-size:11px;font-weight:700;color:#dbe1ed}
+    .camBottom span{display:inline-flex;align-items:center;gap:7px}.camBottom span:before{content:"";height:7px;width:7px;background:#a5f2dc;border-radius:50%}
+    .crosshair{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);width:23px;height:23px;pointer-events:none;opacity:.5}.crosshair:before,.crosshair:after{content:"";position:absolute;background:white}.crosshair:before{width:1px;height:23px;left:11px}.crosshair:after{height:1px;width:23px;top:11px}
+    .controls{display:grid;grid-template-columns:1fr 108px 1fr;align-items:center;gap:11px;padding:0 7px;margin-top:14px}
+    .sideControl{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:0;background:transparent;color:#cbd3e2;font-size:11px;font-weight:650;white-space:nowrap;min-width:0}.circleControl{width:49px;height:49px;display:grid;place-items:center;border-radius:50%;background:#212637;color:#eceefe;border:1px solid #353b4c}
+    .recordBtn{justify-self:center;display:grid;place-items:center;border-radius:50%;width:86px;height:86px;background:#1c1c27;border:3px solid #f6f2ff;box-shadow:0 0 0 7px #f4f0fc0b;color:white;transition:transform .15s}.recordBtn:active{transform:scale(.94)}.recordBtn .inner{width:58px;height:58px;border-radius:50%;background:var(--red);box-shadow:inset 0 0 0 1px #ffffff38;transition:.25s}.recordBtn.recording .inner{width:29px;height:29px;border-radius:7px}
+    .hint{text-align:center;font-size:11px;color:#8993a6;margin:12px 10px 0;line-height:1.5}
+    .sectionHeader{display:flex;justify-content:space-between;align-items:center;margin:18px 1px 11px}.sectionHeader h2{font-size:15px;font-weight:760;letter-spacing:-.35px;margin:0}.sectionHeader span{font-size:11px;color:#a5adbe}
+    .options{display:grid;gap:12px}.optionBlock{border:1px solid #292e40;border-radius:17px;background:linear-gradient(145deg,#181b28,#141722);padding:15px}.optHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px}.optHead label{font-size:12px;font-weight:700;color:#d6dbea}.optHead output{font-size:11px;color:var(--accent);font-weight:800}
+    .segments{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.seg{border:1px solid #34394a;background:#242939;color:#9fa8ba;border-radius:11px;padding:10px 5px;font-size:12px;font-weight:800;min-width:0}.seg.selected{background:#a599f123;color:#d8cfff;border-color:#ab9dff}
+    .optRow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 0;border-bottom:1px solid #ffffff10}.optRow:last-child{border-bottom:0}.optRow label{font-size:12px;color:#d5d9e4;font-weight:710}.optRow small{display:block;color:#8993a6;font-size:10px;font-weight:400;margin-top:4px;line-height:1.5;max-width:260px}
+    .toggle{position:relative;border:0;background:#3e4252;border-radius:99px;height:27px;width:47px;flex:none;transition:.2s}.toggle:after{content:"";display:block;width:21px;height:21px;background:white;border-radius:50%;position:absolute;top:3px;left:3px;transition:.2s}.toggle.on{background:#a599f1}.toggle.on:after{transform:translateX(20px)}
+    input[type=range]{width:100%;accent-color:#b2a4ff;cursor:pointer;height:23px}.zoomRow{display:flex;gap:12px;align-items:center}.zoomRow input{flex:1}.zoomRow small{min-width:32px;color:#d7cef9;font-weight:800}
+    .select{width:100%;background:#252a38;border:1px solid #3b4255;color:white;padding:12px;border-radius:10px;font-size:12px;min-width:0}
+    .notice{border:1px solid #3e3444;background:#271f2b;border-radius:15px;padding:13px 15px;display:flex;gap:10px;margin-top:13px;align-items:flex-start;color:#e5cad3;font-size:11px;line-height:1.6}.notice svg{height:18px;width:18px;color:#f1af9e;flex:none;margin-top:1px}
+    .galleryEmpty{padding:72px 23px;text-align:center;border:1px dashed #373c4d;border-radius:23px;background:#121622}.galleryEmpty .symbol{width:67px;height:67px;display:grid;place-items:center;background:#22263b;border-radius:19px;margin:0 auto 18px;color:var(--accent)}.galleryEmpty h3{font-size:17px;margin:0 0 10px}.galleryEmpty p{color:#9ea7b7;font-size:12px;line-height:1.7;margin:0}
+    .mediaList{display:grid;gap:10px}.mediaItem{display:flex;gap:13px;align-items:center;border:1px solid #2d3344;background:#191d2b;padding:13px;border-radius:17px}.mediaIcon{width:49px;height:49px;display:grid;place-items:center;flex:none;border-radius:13px;background:#35304c;color:#c6bcff}.mediaInfo{flex:1;min-width:0}.mediaInfo b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}.mediaInfo small{color:#8995a8;font-size:10px;display:block;margin-top:5px}.mediaActions{display:flex;gap:6px}.miniBtn{border:1px solid #41465a;background:#2b3042;color:#e9e9fa;border-radius:10px;width:35px;height:35px;display:grid;place-items:center}.miniBtn svg{width:17px;height:17px}
+    .galleryNote{font-size:11px;color:#909aaf;line-height:1.6;margin:0 3px 14px}
+    .footer{text-align:center;font-size:10px;color:#5e687d;padding:16px 0 6px}
+    .modal{position:fixed;inset:0;background:#02030bea;z-index:100;padding:24px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px}.modal.open{display:flex}.modal video,.modal img{max-height:70dvh;max-width:100%;object-fit:contain;border-radius:12px}.modalClose{align-self:flex-end;background:#262b3f;border:1px solid #434962;color:white;padding:11px 14px;border-radius:11px}
+    .toast{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 24px);left:50%;transform:translate(-50%,15px);z-index:101;max-width:min(90vw,450px);background:#323044;color:white;border:1px solid #68617e;box-shadow:0 18px 44px #0009;border-radius:14px;padding:13px 16px;font-size:12px;line-height:1.55;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}.toast.show{opacity:1;transform:translate(-50%,0)}
+    .toplink{color:#c5baff;font-size:12px;font-weight:760;text-decoration:none}.appHow{color:#a2adbf;font-size:11px;line-height:1.65;margin:10px 4px 0}.appHow strong{color:white}
+    #platformWarning{margin:0 1px;color:#f0c2aa;font-size:11px;line-height:1.55;display:none}
+    @media(min-width:850px){.shell{padding-top:40px}.cameraShell{height:560px}.galleryEmpty{margin-top:20px}}
+    @media(max-width:360px){.shell{padding-left:12px;padding-right:12px}.controls{grid-template-columns:1fr 94px 1fr}.tab{padding:9px 12px}.recordBtn{width:79px;height:79px}.cameraShell{height:50dvh}}
+  </style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+<symbol id="camera" viewBox="0 0 24 24"><path d="M14 4h-4l-2 3H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+<symbol id="record" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></symbol>
+<symbol id="gallery" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m4 19 6-6 4 3 3-4 4 4"/></symbol>
+<symbol id="settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="#151926"/><circle cx="16" cy="17" r="3" fill="#151926"/></symbol>
+<symbol id="flip" viewBox="0 0 24 24"><path d="M4 7h11l-3-3m3 3-3 3M20 17H9l3-3m-3 3 3 3"/><path d="M19 9v-3a2 2 0 0 0-2-2h-1M5 15v3a2 2 0 0 0 2 2h1"/></symbol>
+<symbol id="download" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v3h16v-3"/></symbol>
+<symbol id="play" viewBox="0 0 24 24"><path d="m8 5 12 7-12 7z"/></symbol>
+<symbol id="trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3m-9 0 1 13h10l1-13M10 11v5m4-5v5"/></symbol>
+<symbol id="warning" viewBox="0 0 24 24"><path d="M12 3 2 21h20zM12 9v5m0 3v.5"/></symbol>
+<symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+<symbol id="moon" viewBox="0 0 24 24"><path d="M20 16A9 9 0 0 1 8 4a9 9 0 1 0 12 12Z"/></symbol>
+</svg>
+<div class="shell">
+  <header class="topbar">
+    <div class="identity"><div class="logo"><svg style="width:26px;height:26px"><use href="#camera"/></svg></div><div><strong>MoonCam <span>Pro</span></strong><small>CAMERA STUDIO</small></div></div>
+    <button class="iconBtn" id="aboutBtn" title="Hướng dẫn" aria-label="Hướng dẫn"><svg><use href="#info"/></svg></button>
+  </header>
+  <nav class="tabs" aria-label="Điều hướng">
+    <button class="tab active" data-view="capture"><svg><use href="#camera"/></svg> Camera</button>
+    <button class="tab" data-view="library"><svg><use href="#gallery"/></svg> Thư viện <span id="libraryCount"></span></button>
+    <button class="tab" data-view="config"><svg><use href="#settings"/></svg> Cài đặt</button>
+  </nav>
+  <main>
+    <section id="view-capture" class="view active" aria-label="Camera">
+      <div class="cameraShell">
+        <video id="cameraPreview" autoplay muted playsinline webkit-playsinline></video>
+        <div class="noCamera" id="permissionCover">
+          <div class="moon"></div><h2>Ghi lại mọi khoảnh khắc</h2><p>Camera trực tiếp, quay video và lưu vào iPhone. Chạm để cấp quyền camera.</p>
+          <button class="startCamera" id="openCameraBtn">Bật camera <span style="margin-left:6px">↗</span></button>
+        </div>
+        <div class="crosshair"></div>
+        <div class="camTop"><span class="pill" id="recordState"><i class="dot"></i><span id="stateText">CHỜ CAMERA</span></span><span class="pill timercap" id="timer">00:00:00</span></div>
+        <div class="camBottom"><span id="liveQuality">CHƯA KẾT NỐI</span><span id="micStatus">MIC BẬT</span></div>
+      </div>
+      <div class="controls">
+        <button id="flipBtn" class="sideControl" aria-label="Đổi camera"><span class="circleControl"><svg><use href="#flip"/></svg></span><span>Đổi camera</span></button>
+        <button id="recordBtn" class="recordBtn" aria-label="Bắt đầu quay video" title="Quay hoặc dừng"><span class="inner"></span></button>
+        <button id="photoBtn" class="sideControl" aria-label="Chụp ảnh"><span class="circleControl"><svg><use href="#camera"/></svg></span><span>Chụp ảnh</span></button>
+      </div>
+      <p class="hint" id="captureHint">Bắt đầu quay rồi nhấn nút đỏ lần nữa để dừng và lưu video.</p>
+      <p id="platformWarning">Bạn vừa rời khỏi web app. iOS có thể đã ngắt camera hoặc làm thiếu khung hình trong lúc chuyển ứng dụng. Hãy xem lại video sau khi dừng.</p>
+      <div class="sectionHeader"><h2>Điều khiển nhanh</h2><span id="cameraHardware">Camera sau</span></div>
+      <div class="options">
+        <div class="optionBlock"><div class="optHead"><label for="zoomSlider">Zoom quang học/phần cứng (nếu có)</label><output id="zoomText">Không khả dụng</output></div><div class="zoomRow"><small>1×</small><input id="zoomSlider" aria-label="Zoom camera" type="range" min="1" max="1" step="0.1" value="1" disabled><small id="zoomLimit">1×</small></div><p style="color:#8d96a8;font-size:10px;line-height:1.5;margin:6px 0 0">Chỉ kích hoạt nếu Safari cho phép điều khiển zoom thật; không tạo zoom ảo trong bản ghi.</p></div>
+      </div>
+      <div class="notice"><svg><use href="#warning"/></svg><div><b>Giới hạn của iPhone</b><br>Chuyển sang ứng dụng khác hoặc khóa màn hình có thể ngắt camera. Web app không thể bảo đảm quay nền. Dừng và lưu video trước khi rời ứng dụng để an toàn nhất.</div></div>
+    </section>
+    <section id="view-library" class="view" aria-label="Thư viện">
+      <div class="sectionHeader" style="margin-top:4px"><h2>Video & ảnh đã lưu</h2><span id="countInfo">0 mục</span></div>
+      <p class="galleryNote">Lưu cục bộ trên trình duyệt của thiết bị này. Hãy dùng nút tải về để lưu vào ứng dụng Tệp hoặc Ảnh; dữ liệu trong web app có thể bị iOS dọn dẹp.</p>
+      <div id="mediaList" class="mediaList"></div>
+      <div id="emptyGallery" class="galleryEmpty"><div class="symbol"><svg style="width:30px;height:30px"><use href="#gallery"/></svg></div><h3>Chưa có ảnh hoặc video</h3><p>Video sau khi kết thúc quay sẽ xuất hiện tại đây để xem và tải xuống.</p></div>
+      <div class="sectionHeader"><h2>Khôi phục bản ghi gián đoạn</h2></div><p class="galleryNote">Các đoạn dữ liệu tạm được lưu trong khi quay nếu trình duyệt hỗ trợ. Bản ghi bị iOS ngắt đột ngột có thể thiếu đoạn kết và không phát được.</p><div id="recoveryList" class="mediaList"></div>
+    </section>
+    <section id="view-config" class="view" aria-label="Cài đặt">
+      <div class="sectionHeader" style="margin-top:4px"><h2>Chất lượng video</h2><span>Tùy thuộc iPhone và Safari</span></div>
+      <div class="options">
+        <div class="optionBlock"><div class="optHead"><label>Độ phân giải mong muốn</label><output id="resolutionValue">1080p</output></div><div class="segments" id="resolutionButtons"><button class="seg" data-res="720">720p</button><button class="seg selected" data-res="1080">1080p</button><button class="seg" data-res="2160">4K</button></div><p class="appHow">Đây là độ phân giải yêu cầu. Camera có thể cung cấp độ phân giải thấp hơn; kích thước thật sẽ hiển thị ngay trên khung quay.</p></div>
+        <div class="optionBlock"><div class="optHead"><label>Tốc độ khung hình mong muốn</label><output id="fpsValue">30 FPS</output></div><div class="segments" id="fpsButtons"><button class="seg" data-fps="24">24 FPS</button><button class="seg selected" data-fps="30">30 FPS</button><button class="seg" data-fps="60">60 FPS</button></div></div>
+        <div class="optionBlock">
+          <div class="optRow"><div><label>Thu âm micro</label><small>Quay video có âm thanh môi trường khi cấp quyền</small></div><button id="micToggle" class="toggle on" role="switch" aria-checked="true" aria-label="Thu âm micro"></button></div>
+          <div class="optRow"><div><label>Giữ màn hình sáng</label><small>Thử ngăn màn hình tự tắt khi đang quay</small></div><button id="wakeToggle" class="toggle on" role="switch" aria-checked="true" aria-label="Giữ màn hình sáng"></button></div>
+          <div class="optRow"><div><label>Lưu bản sao dự phòng</label><small>Lưu từng đoạn dữ liệu trong bộ nhớ web khi có thể. Không bảo đảm cứu được MP4 nếu iOS ngắt đột ngột.</small></div><button id="backupToggle" class="toggle on" role="switch" aria-checked="true" aria-label="Lưu bản sao dự phòng"></button></div>
+          <div class="optRow" style="display:block"><label for="deviceSelector">Thiết bị camera</label><small>iOS có thể chỉ cung cấp camera trước và sau, không cho chọn riêng tele 5x.</small><select id="deviceSelector" class="select" style="margin-top:10px"><option value="auto">Tự động (camera sau)</option></select></div>
+        </div>
+      </div>
+      <div class="sectionHeader"><h2>Thêm vào Màn hình chính</h2></div>
+      <div class="optionBlock" style="color:#b8c0d0;font-size:12px;line-height:1.85"><strong style="color:white">Trên iPhone:</strong> Mở website qua Safari → bấm <b>Chia sẻ</b> → <b>Thêm vào Màn hình chính</b> → <b>Thêm</b>. Website phải được chạy qua HTTPS để dùng camera (không mở file HTML trực tiếp trong Tệp).</div>
+      <div class="notice"><svg><use href="#info"/></svg><div><b>Quyền riêng tư</b><br>Web app không gửi video lên máy chủ; dữ liệu chỉ xử lý trên thiết bị. Video có thể chiếm nhiều dung lượng. Xóa dữ liệu Safari cũng có thể xóa thư viện của ứng dụng.</div></div>
+    </section>
+  </main>
+  <footer class="footer">MOONCAM PRO · LOCAL FIRST CAMERA · iOS PWA</footer>
+</div>
+<div class="modal" id="mediaModal"><button class="modalClose" id="closeModal">Đóng ✕</button><div id="modalContent"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+const $ = id=>document.getElementById(id);
+const state={stream:null,recorder:null,mode:'environment',resolution:1080,fps:30,mic:true,wake:true,backup:true,activeDevice:'auto',recordStarted:0,recordId:null,mime:'',chunks:[],chunkTasks:[],seq:0,hiddenDuringRecording:false,wakeLock:null,zoomMin:1,zoomMax:1,zoomValue:1,db:null,previewObjectUrl:null};
+const safeName=s=>String(s).replace(/[<>"'&]/g,'');
+let toastTimer=0,clockTimer=0;
+function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),4600)}
+function pad(n){return String(n).padStart(2,'0')}
+function timeFormat(s){s=Math.max(0,Math.floor(s));return `${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}:${pad(s%60)}`}
+function dateName(prefix,ext){const d=new Date;return `${prefix}_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}.${ext}`}
+function friendlyError(e){if(!window.isSecureContext)return 'Camera cần website HTTPS. Hãy triển khai web lên hosting HTTPS.';if(e?.name==='NotAllowedError')return 'Bạn đã từ chối quyền camera/micro. Hãy cấp quyền cho website trong Safari.';if(e?.name==='NotFoundError')return 'Không tìm thấy camera tương thích.';if(e?.name==='NotReadableError')return 'Camera đang bị ứng dụng khác sử dụng hoặc iOS không cho truy cập.';return e?.message || 'Không thể mở camera.'}
+function setStatus(label,recording=false){$('stateText').textContent=label;$('recordState').classList.toggle('record',recording)}
+function setView(view){if(view!=='capture'&&state.recorder&&state.recorder.state!=='inactive'){toast('Vẫn đang quay trong web app. Không rời sang ứng dụng iOS khác.')}document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.view===view));document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id===`view-${view}`));if(view==='library')refreshLibrary();}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+function allTracksStop(){if(state.stream){state.stream.getTracks().forEach(t=>t.stop());state.stream=null;}$('cameraPreview').srcObject=null;}
+function configVideo(){const sizes={720:[1280,720],1080:[1920,1080],2160:[3840,2160]},[w,h]=sizes[state.resolution];const video={width:{ideal:w},height:{ideal:h},frameRate:{ideal:state.fps,max:state.fps}};if(state.activeDevice!=='auto')video.deviceId={ideal:state.activeDevice};else video.facingMode={ideal:state.mode};return video;}
+async function openCamera(){if(!navigator.mediaDevices?.getUserMedia){toast('Safari không hỗ trợ camera tại địa chỉ này. Hãy mở qua HTTPS.');return false;}if(state.recorder&&state.recorder.state!=='inactive'){toast('Dừng quay trước khi đổi thiết lập camera.');return false}try{allTracksStop();setStatus('ĐANG MỞ...');const request={video:configVideo(),audio:state.mic?{echoCancellation:false,noiseSuppression:false,autoGainControl:false}:false};try{state.stream=await navigator.mediaDevices.getUserMedia(request)}catch(err){if(state.mic&&['NotAllowedError','NotFoundError','OverconstrainedError'].includes(err.name)){const retry=await navigator.mediaDevices.getUserMedia({video:configVideo(),audio:false});state.stream=retry;state.mic=false;updateToggles();toast('Không lấy được quyền micro. Camera được mở không có tiếng.')}else throw err}
+ const vid=$('cameraPreview');vid.srcObject=state.stream;await vid.play();$('permissionCover').classList.add('hidden');setStatus('CAMERA LIVE');const vtrack=state.stream.getVideoTracks()[0];vtrack.addEventListener('ended',onTrackEnded);vtrack.addEventListener('mute',onTrackMute);vtrack.addEventListener('unmute',()=>{if(state.recorder&&state.recorder.state==='recording')setStatus('ĐANG QUAY',true)});const s=vtrack.getSettings?.()||{};$('liveQuality').textContent=`${s.width||'?'} × ${s.height||'?'} · ${Math.round(s.frameRate||state.fps)} FPS`;const label=vtrack.label||'Camera iPhone';$('cameraHardware').textContent=label.length>25?label.slice(0,25)+'…':label;updateZoom(vtrack);enumerateCameras();return true;
+ }catch(e){setStatus('LỖI CAMERA');$('permissionCover').classList.remove('hidden');toast(friendlyError(e));return false}}
+function onTrackMute(){if(state.recorder&&state.recorder.state==='recording'){state.hiddenDuringRecording=true;setStatus('CAMERA BỊ NGẮT',true);$('platformWarning').style.display='block';toast('Camera đã bị tắt tiếng/hình. Video có thể bị thiếu khung hình.')}}
+function onTrackEnded(){if(state.recorder&&state.recorder.state!=='inactive'){toast('iOS đã ngắt camera. Đang kết thúc bản ghi…');stopRecord();}else{setStatus('MẤT CAMERA');$('permissionCover').classList.remove('hidden')}}
+async function enumerateCameras(){try{const devices=(await navigator.mediaDevices.enumerateDevices()).filter(x=>x.kind==='videoinput');const selector=$('deviceSelector');const before=state.activeDevice;selector.replaceChildren();selector.add(new Option('Tự động (camera sau)','auto'));devices.forEach((d,i)=>selector.add(new Option(d.label||`Camera ${i+1}`,d.deviceId)));selector.value=before;if(selector.selectedIndex<0)selector.value='auto';}catch{}}
+function updateZoom(track){const cap=track.getCapabilities?.()||{};const slider=$('zoomSlider');if(typeof cap.zoom==='object'&&typeof cap.zoom.max==='number'){state.zoomMin=cap.zoom.min||1;state.zoomMax=cap.zoom.max||1;state.zoomValue=track.getSettings?.().zoom||state.zoomMin;slider.min=state.zoomMin;slider.max=state.zoomMax;slider.step=cap.zoom.step||0.1;slider.value=state.zoomValue;slider.disabled=state.zoomMax<=state.zoomMin;$('zoomText').textContent=state.zoomValue.toFixed(1)+'×';$('zoomLimit').textContent=state.zoomMax.toFixed(1)+'×';}else{state.zoomMin=state.zoomMax=1;slider.disabled=true;slider.min=1;slider.max=1;slider.value=1;$('zoomText').textContent='Không khả dụng';$('zoomLimit').textContent='1×';}}
+$('zoomSlider').addEventListener('input',async e=>{const t=state.stream?.getVideoTracks()[0];if(!t)return;const v=+e.target.value;try{await t.applyConstraints({advanced:[{zoom:v}]});$('zoomText').textContent=v.toFixed(1)+'×'}catch{toast('Safari không cho thay đổi zoom của camera này.')}});
+$('openCameraBtn').addEventListener('click',openCamera);
+$('flipBtn').addEventListener('click',async()=>{if(state.recorder&&state.recorder.state!=='inactive'){toast('Hãy dừng quay trước khi đổi camera.');return;}state.mode=state.mode==='environment'?'user':'environment';state.activeDevice='auto';await openCamera()});
+function chooseMime(){if(typeof MediaRecorder==='undefined')return '';const types=['video/mp4;codecs="avc1.42E01E,mp4a.40.2"','video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];return types.find(type=>MediaRecorder.isTypeSupported(type))||'';}
+function setRecordingUI(active){$('recordBtn').classList.toggle('recording',active);$('recordBtn').setAttribute('aria-label',active?'Dừng quay':'Bắt đầu quay');$('captureHint').textContent=active?'Đang ghi hình · Nhấn nút vuông đỏ để dừng và lưu.':'Nhấn nút đỏ để quay video mới.';document.querySelectorAll('.seg').forEach(x=>x.disabled=active);$('deviceSelector').disabled=active;$('flipBtn').disabled=active;}
+async function requestWake(){if(!state.wake||!navigator.wakeLock)return;try{state.wakeLock=await navigator.wakeLock.request('screen')}catch{}}
+async function releaseWake(){try{await state.wakeLock?.release()}catch{}state.wakeLock=null}
+async function startRecord(){if(!state.stream){const ok=await openCamera();if(!ok)return;}if(typeof MediaRecorder==='undefined'){toast('Phiên bản Safari này không hỗ trợ quay video MediaRecorder.');return}const mime=chooseMime();let rec;try{const opts=mime?{mimeType:mime}:{};opts.videoBitsPerSecond=state.resolution===2160?14000000:state.resolution===1080?6500000:3500000;rec=new MediaRecorder(state.stream,opts)}catch(e){try{rec=new MediaRecorder(state.stream)}catch(err){toast('Không thể khởi tạo ghi hình: '+friendlyError(err));return}}
+ state.recorder=rec;state.mime=rec.mimeType||mime||'video/mp4';state.recordId=Date.now()+'-'+Math.random().toString(36).slice(2,8);state.chunks=[];state.chunkTasks=[];state.seq=0;state.hiddenDuringRecording=false;$('platformWarning').style.display='none';state.recordStarted=Date.now();const recordId=state.recordId;
+ await put('pending',{id:recordId,start:state.recordStarted,mime:state.mime,status:'recording'}).catch(()=>{});
+ rec.ondataavailable=e=>{if(!e.data||!e.data.size)return;state.chunks.push(e.data);if(state.backup){const seq=state.seq++;const task=put('chunks',{session:recordId,seq,blob:e.data}).catch(()=>{});state.chunkTasks.push(task)}};
+ rec.onerror=e=>{toast('Lỗi ghi hình: '+(e.error?.message||'Không xác định'));};
+ rec.onstop=()=>finishRecord(rec,recordId);
+ try{rec.start(2000);setRecordingUI(true);setStatus('ĐANG QUAY',true);clockTimer=setInterval(()=>$('timer').textContent=timeFormat((Date.now()-state.recordStarted)/1000),250);await requestWake()}catch(e){toast('Không bắt đầu quay được: '+friendlyError(e));setRecordingUI(false);setStatus('CAMERA LIVE')}
+}
+async function stopRecord(){if(!state.recorder||state.recorder.state==='inactive')return;try{state.recorder.requestData()}catch{}try{state.recorder.stop()}catch{}setStatus('ĐANG LƯU...');setRecordingUI(false);clearInterval(clockTimer);await releaseWake()}
+async function finishRecord(rec,id){const startedAt=state.recordStarted,duration=Math.max(0,Date.now()-startedAt);await Promise.allSettled(state.chunkTasks);if(rec!==state.recorder)return;const mime=rec.mimeType||state.mime||'video/mp4';const extension=mime.includes('webm')?'webm':'mp4';const blob=new Blob(state.chunks,{type:mime});if(blob.size){const name=dateName('MoonCam',extension);try{await put('media',{id,name,mime,date:startedAt,type:'video',duration,size:blob.size,blob});toast('Đã lưu video vào thư viện web app. Hãy tải về Tệp/Ảnh để giữ an toàn.')}catch{toast('Không lưu được vào thư viện web. Hãy tải video ngay!');const url=URL.createObjectURL(blob);makeDownload(url,name);setTimeout(()=>URL.revokeObjectURL(url),60000)}}else{toast('Không có dữ liệu video để lưu. Có thể iOS đã ngắt camera.')}
+ await Promise.allSettled([del('pending',id),deleteChunks(id)]);state.recorder=null;state.chunks=[];state.chunkTasks=[];state.recordId=null;setStatus(state.stream?.getVideoTracks()[0]?.readyState==='live'?'CAMERA LIVE':'CAMERA ĐÃ NGẮT');$('timer').textContent=timeFormat(duration/1000);refreshLibrary();if(state.hiddenDuringRecording)$('platformWarning').style.display='block';}
+$('recordBtn').addEventListener('click',async()=>{if(state.recorder&&state.recorder.state!=='inactive')await stopRecord();else await startRecord()});
+$('photoBtn').addEventListener('click',async()=>{if(!state.stream){const ok=await openCamera();if(!ok)return}const v=$('cameraPreview');if(!v.videoWidth){toast('Camera chưa có hình ảnh.');return}const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);c.toBlob(async blob=>{if(!blob)return;const item={id:Date.now()+'-photo',name:dateName('MoonCam_Photo','jpg'),mime:'image/jpeg',date:Date.now(),type:'photo',size:blob.size,blob};try{await put('media',item);toast('Đã lưu ảnh vào thư viện web app.')}catch{const url=URL.createObjectURL(blob);makeDownload(url,item.name);setTimeout(()=>URL.revokeObjectURL(url),60000)}},'image/jpeg',.95)});
+function updateToggles(){[['micToggle','mic'],['wakeToggle','wake'],['backupToggle','backup']].forEach(([id,k])=>{$(id).classList.toggle('on',state[k]);$(id).setAttribute('aria-checked',String(state[k]))});$('micStatus').textContent=state.mic?'MIC BẬT':'MIC TẮT'}
+[['micToggle','mic'],['wakeToggle','wake'],['backupToggle','backup']].forEach(([id,k])=>{$(id).addEventListener('click',async()=>{if(k==='mic'&&state.recorder&&state.recorder.state!=='inactive'){toast('Hãy dừng quay trước khi đổi quyền micro.');return}state[k]=!state[k];updateToggles();if(k==='mic'&&state.stream)await openCamera();})});
+function setupSegments(container,attr,prop,output,units){$(container).querySelectorAll('button').forEach(b=>b.addEventListener('click',async()=>{if(state.recorder&&state.recorder.state!=='inactive'){toast('Dừng quay trước khi đổi chất lượng.');return}state[prop]=Number(b.dataset[attr]);$(output).textContent=state[prop]===2160?'4K':String(state[prop])+units;$(container).querySelectorAll('button').forEach(x=>x.classList.toggle('selected',x===b));if(state.stream)await openCamera();}));}
+setupSegments('resolutionButtons','res','resolution','resolutionValue','p');setupSegments('fpsButtons','fps','fps','fpsValue',' FPS');
+$('deviceSelector').addEventListener('change',async e=>{state.activeDevice=e.target.value;if(state.stream)await openCamera()});
+$('aboutBtn').addEventListener('click',()=>{setView('config');toast('Mở Safari → Chia sẻ → Thêm vào Màn hình chính. Camera cần HTTPS và không thể quay nền khi rời ứng dụng.');});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(state.recorder&&state.recorder.state!=='inactive'){state.hiddenDuringRecording=true;try{state.recorder.requestData()}catch{};}}else{if(state.recorder&&state.recorder.state!=='inactive'&&state.hiddenDuringRecording){$('platformWarning').style.display='block';const t=state.stream?.getVideoTracks()[0];if(!t||t.readyState!=='live'){toast('Camera đã bị iOS ngắt khi bạn rời ứng dụng.');stopRecord()}else{toast('Đã quay lại. Kiểm tra video vì phần quay trong nền có thể bị thiếu.')}}if(state.stream?.getVideoTracks()[0]?.muted){$('platformWarning').style.display='block';setStatus('CAMERA BỊ TẠM NGẮT')}if(state.recorder&&state.recorder.state==='recording')requestWake();}});
+window.addEventListener('pagehide',()=>{if(state.recorder&&state.recorder.state==='recording'){try{state.recorder.requestData()}catch{}}});
+function initDB(){return new Promise((resolve,reject)=>{if(!indexedDB){reject(Error('Không hỗ trợ IndexedDB'));return}const req=indexedDB.open('MoonCamPro',2);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('media'))db.createObjectStore('media',{keyPath:'id'});if(!db.objectStoreNames.contains('pending'))db.createObjectStore('pending',{keyPath:'id'});if(!db.objectStoreNames.contains('chunks')){const st=db.createObjectStore('chunks',{keyPath:['session','seq']});st.createIndex('bySession','session',{unique:false})}};req.onsuccess=()=>{state.db=req.result;resolve()};req.onerror=()=>reject(req.error)})}
+function storeOp(s,mode,fn){return new Promise((resolve,reject)=>{if(!state.db)return reject(Error('Không có lưu trữ cục bộ'));try{const tx=state.db.transaction(s,mode);const st=tx.objectStore(s);const req=fn(st);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)}catch(e){reject(e)}})}
+const put=(store,obj)=>storeOp(store,'readwrite',s=>s.put(obj));
+const del=(store,key)=>storeOp(store,'readwrite',s=>s.delete(key));
+const all=store=>storeOp(store,'readonly',s=>s.getAll());
+const one=(store,id)=>storeOp(store,'readonly',s=>s.get(id));
+async function deleteChunks(session){if(!state.db)return;try{const rows=await chunksFor(session);await Promise.all(rows.map(x=>del('chunks',[x.session,x.seq])))}catch{}}
+function chunksFor(session){return new Promise((resolve,reject)=>{if(!state.db)return resolve([]);const tx=state.db.transaction('chunks','readonly');const req=tx.objectStore('chunks').index('bySession').getAll(IDBKeyRange.only(session));req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error)})}
+function makeDownload(url,name){const a=document.createElement('a');a.href=url;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();a.remove()}
+async function downloadMedia(id){const item=await one('media',id).catch(()=>null);if(!item)return toast('Không tìm thấy tệp đã lưu.');const url=URL.createObjectURL(item.blob);makeDownload(url,item.name);setTimeout(()=>URL.revokeObjectURL(url),70000);toast('Nếu iPhone hiển thị bản xem trước, hãy bấm Chia sẻ → Lưu vào Tệp hoặc Lưu video.');}
+async function openMedia(id){const item=await one('media',id).catch(()=>null);if(!item)return;closeMedia();const url=URL.createObjectURL(item.blob);state.previewObjectUrl=url;const el=document.createElement(item.type==='photo'?'img':'video');el.src=url;if(item.type==='video'){el.controls=true;el.playsInline=true;el.autoplay=false}el.alt=item.name;$('modalContent').replaceChildren(el);$('mediaModal').classList.add('open');}
+function closeMedia(){const el=$('modalContent').firstChild;if(el?.pause)el.pause();$('modalContent').replaceChildren();$('mediaModal').classList.remove('open');if(state.previewObjectUrl)URL.revokeObjectURL(state.previewObjectUrl);state.previewObjectUrl=null;}
+$('closeModal').addEventListener('click',closeMedia);$('mediaModal').addEventListener('click',e=>{if(e.target===$('mediaModal'))closeMedia()});
+function formatBytes(n){if(!n)return '0 KB';return n>1024*1024?(n/1048576).toFixed(1)+' MB':(n/1024).toFixed(0)+' KB'}
+function element(tag,cls,text){const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el}
+function actionBtn(iconName,descr,action){const btn=element('button','miniBtn');btn.setAttribute('aria-label',descr);btn.title=descr;btn.innerHTML=`<svg><use href="#${iconName}"/></svg>`;btn.addEventListener('click',action);return btn}
+async function refreshLibrary(){const media=await all('media').catch(()=>[]);media.sort((a,b)=>b.date-a.date);$('countInfo').textContent=media.length+' mục';$('libraryCount').textContent=media.length?'('+media.length+')':'';$('emptyGallery').style.display=media.length?'none':'block';$('mediaList').replaceChildren();media.forEach(item=>{const row=element('div','mediaItem');const symbol=element('div','mediaIcon');symbol.innerHTML=`<svg><use href="#${item.type==='photo'?'gallery':'record'}"/></svg>`;const info=element('div','mediaInfo');info.append(element('b','',item.name));info.append(element('small','',`${item.type==='photo'?'Ảnh':'Video'} · ${formatBytes(item.size)}${item.duration?' · '+timeFormat(item.duration/1000):''}`));const actions=element('div','mediaActions');actions.append(actionBtn('play','Xem',()=>openMedia(item.id)));actions.append(actionBtn('download','Tải về',()=>downloadMedia(item.id)));actions.append(actionBtn('trash','Xóa',async()=>{if(!confirm('Xóa bản ghi này khỏi bộ nhớ web?'))return;await del('media',item.id).catch(()=>{});refreshLibrary()}));row.append(symbol,info,actions);$('mediaList').append(row)});
+ const pending=await all('pending').catch(()=>[]);$('recoveryList').replaceChildren();for(const p of pending){if(state.recordId===p.id)continue;const row=element('div','mediaItem');const ico=element('div','mediaIcon');ico.innerHTML='<svg><use href="#warning"/></svg>';const info=element('div','mediaInfo');info.append(element('b','','Bản ghi bị gián đoạn'));info.append(element('small','',new Date(p.start).toLocaleString('vi-VN')));const acts=element('div','mediaActions');acts.append(actionBtn('download','Thử khôi phục',async()=>{const segments=await chunksFor(p.id);if(!segments.length){toast('Không có dữ liệu tạm để khôi phục.');return}segments.sort((a,b)=>a.seq-b.seq);const mime=p.mime||'video/mp4';const blob=new Blob(segments.map(x=>x.blob),{type:mime});const ext=mime.includes('webm')?'webm':'mp4';const id='recover-'+p.id;await put('media',{id,name:`MoonCam_khoi_phuc_${p.id}.${ext}`,date:p.start,mime,type:'video',size:blob.size,blob}).catch(()=>{});toast('Đã ghép dữ liệu tạm. Video MP4 có thể không phát được nếu thiếu phần kết.');await del('pending',p.id);await deleteChunks(p.id);refreshLibrary()}));acts.append(actionBtn('trash','Xóa dữ liệu tạm',async()=>{if(!confirm('Xóa dữ liệu quay tạm?'))return;await del('pending',p.id);await deleteChunks(p.id);refreshLibrary()}));row.append(ico,info,acts);$('recoveryList').append(row)}}
+(async()=>{updateToggles();if(!window.isSecureContext){$('permissionCover').querySelector('p').textContent='Cần website HTTPS để dùng camera trên iPhone. Mở file HTML trực tiếp sẽ không hoạt động.'}try{await initDB();refreshLibrary()}catch{toast('Không dùng được bộ nhớ cục bộ. Hãy lưu tệp ngay sau khi quay.')};if('serviceWorker'in navigator&&window.isSecureContext){navigator.serviceWorker.register('./sw.js').catch(()=>{})}})();
+</script>
+</body>
+</html>
