@@ -1,5 +1,5 @@
 {
-  "version": "1.8.0",
+  "version": "1.9.0",
   "published": "2026-11-25",
-  "release_notes": "Tối ưu Meteor Dash và Moon 2048, bàn 2048 lớn hơn, ô số tự co vừa, bỏ Săn sao. Giữ cập nhật an toàn khi đang quay."
+  "release_notes": "Moon 2048 có AI tự chơi bằng thuật toán Expectimax, dừng/tiếp tục, chọn tốc độ 1x/2x/4x; tiếp tục sau mốc 2048 tới khi hết nước, không tác động vào camera hoặc bộ ghi. Giữ Meteor Dash và cập nhật PWA an toàn."
 }

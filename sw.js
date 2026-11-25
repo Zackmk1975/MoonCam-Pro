@@ -1,6 +1,6 @@
-/* MoonCam Pro v1.8: cache ngoại tuyến, luôn ưu tiên bản mới trên mạng. */
+/* MoonCam Pro v1.9: cache ngoại tuyến, luôn ưu tiên bản mới trên mạng. */
 'use strict';
-const CACHE='mooncam-pro-v1-8-0';
+const CACHE='mooncam-pro-v1-9-0';
 const PRECACHE=['./','./index.html','./updates.js','./manifest.webmanifest',
   './icons/icon-180.png','./icons/icon-192.png','./icons/icon-512.png',
   './games/meteor.html','./games/merge.html'];

@@ -1,7 +1,7 @@
 /* MoonCam AutoUpdater – không reload trang khi ghi video, chụp/lưu, đang chơi game. */
 (()=>{
  'use strict';
- const APP_VERSION='1.8.0';
+ const APP_VERSION='1.9.0';
  const POLL_MS=5*60*1000;
  const byId=id=>document.getElementById(id);
  const $status=byId('updateStatus'),$check=byId('checkUpdateBtn');
