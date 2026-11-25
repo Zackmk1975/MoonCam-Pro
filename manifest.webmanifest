@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "MoonCam Pro – Play & Record",
+  "name": "MoonCam Pro",
   "short_name": "MoonCam Pro",
-  "description": "Quay video camera iPhone trong khi chơi ba mini game độc lập, đổi game mà không tải lại camera. Lưu video cục bộ.",
+  "description": "Camera, Meteor Dash, Moon 2048 và cập nhật tự động. Lưu video cục bộ.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

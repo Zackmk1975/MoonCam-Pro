@@ -11,7 +11,7 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./icons/icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-  <title>MoonCam Pro v1.6 · Play & Record</title>
+  <title>MoonCam Pro v1.8 · Game Edition</title>
   <style>
     :root{color-scheme:dark;--bg:#090b13;--surface:#151926;--surface2:#1b2130;--border:#303648;--text:#f7f8fc;--muted:#9ca5b6;--accent:#b2a4ff;--accent2:#5cd9dc;--red:#ff555f;--green:#7be2b2;--r:20px;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -321,7 +321,7 @@ button:focus-visible,select:focus-visible,summary:focus-visible,input:focus-visi
 .gameRecDot{height:10px;width:10px;flex:none;border-radius:50%;background:#7b839a;box-shadow:0 0 0 5px #ffffff0b}.gameRecDot.live{background:#fc596f;box-shadow:0 0 0 5px #ff596d22,0 0 16px #ff596d77;animation:blink 1s infinite}.gameRecDot.warn{background:#ffd16c;box-shadow:0 0 14px #ffd16c55}
 .gameRecRight{text-align:right;flex:none}.gameRecRight strong{display:block;font-size:15px;font-variant-numeric:tabular-nums;font-weight:900;letter-spacing:.9px}.gameRecRight small{display:block;margin-top:3px;font-size:9px;color:#9ba6c1;font-variant-numeric:tabular-nums}
 .gameSelectHeader{display:flex;justify-content:space-between;align-items:center;padding:0 1px;margin-top:1px}.gameSelectHeader strong{font-size:9px;letter-spacing:1.5px;color:#aeb6d3}.gameSelectHeader small{font-size:9px;color:#a0e5dd}
-.gamePicker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:none}
+.gamePicker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;flex:none}
 .gameChoice{min-height:54px;border:1px solid #39435f;border-radius:15px;background:#1a2236bb;color:#aeb8d0;display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 4px;font-size:11px;font-weight:760;white-space:nowrap}
 .gameChoice.selected{border-color:#ae9eff;background:linear-gradient(150deg,#594d90bb,#263452bb);color:#fff;box-shadow:0 0 0 1px #afa3ff24 inset}.gameEmoji{font-size:17px;line-height:1}
 .gameViewport{flex:1;min-height:145px;position:relative;background:radial-gradient(circle at center,#172744,#080e1d);border-radius:20px;border:1px solid #505b7a;overflow:hidden;box-shadow:0 15px 38px #0009,inset 0 0 40px #10274a}
@@ -338,7 +338,14 @@ button:focus-visible,select:focus-visible,summary:focus-visible,input:focus-visi
 @media(max-height:680px){.gameStudio{padding-top:max(env(safe-area-inset-top),5px)}.gameHeader{margin-bottom:5px;min-height:35px}.gameBrandMark{height:33px;width:33px}.gameRecStatus{padding:7px 11px}.gameSelectHeader{display:none}.gamePicker{gap:5px}.gameChoice{min-height:41px}.gameStudioBody{gap:5px}.gameDock{margin-top:5px}.gameDockActions button{min-height:43px}.gameDockHint{display:none}}
 @media(min-width:701px){.tabs{gap:3px}.gameStudio{padding-top:24px;padding-bottom:24px}}
 
-  </style>
+    .updateActionButton{width:100%;min-height:46px;border-radius:12px;border:1px solid #8b81db;background:#302b4e;color:#f4f0ff;font-size:13px;font-weight:800}
+  .updateNotice{position:fixed;left:50%;bottom:calc(85px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(calc(100% - 22px),520px);z-index:2100;display:flex;align-items:center;gap:9px;background:#272944;border:1px solid #928bce;border-radius:16px;padding:12px 12px 12px 15px;box-shadow:0 12px 35px #000b}
+  .updateNotice[hidden]{display:none!important}
+  .updateNoticeText{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}.updateNoticeText strong{font-size:13px}.updateNoticeText span{font-size:11px;line-height:1.4;color:#c4c8e0}
+  #updateNowBtn{min-height:40px;border-radius:10px;padding:0 13px;border:0;background:#b8acff;color:#201a3e;font-size:12px;font-weight:850;white-space:nowrap}
+  #updateNowBtn:disabled{opacity:.48}#updateLaterBtn{border:0;background:transparent;color:#bfc4d5;font-size:18px;padding:7px}
+  @media(max-width:365px){.updateNotice{bottom:calc(78px + env(safe-area-inset-bottom))}.updateNoticeText span{font-size:10px}#updateNowBtn{padding:0 9px}}
+</style>
 </head>
 <body>
 <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
@@ -366,7 +373,7 @@ button:focus-visible,select:focus-visible,summary:focus-visible,input:focus-visi
 </svg>
 <div class="shell">
   <header class="topbar">
-    <div class="identity"><div class="logo"><svg style="width:26px;height:26px"><use href="#camera"/></svg></div><div><strong>MoonCam <span>Pro</span></strong><small>PLAY & RECORD · v1.6</small></div></div>
+    <div class="identity"><div class="logo"><svg style="width:26px;height:26px"><use href="#camera"/></svg></div><div><strong>MoonCam <span>Pro</span></strong><small>GAME EDITION · v1.8</small></div></div>
     <button class="iconBtn" id="aboutBtn" title="Hướng dẫn" aria-label="Hướng dẫn"><svg><use href="#info"/></svg></button>
   </header>
   <nav class="tabs" aria-label="Điều hướng">
@@ -459,6 +466,12 @@ button:focus-visible,select:focus-visible,summary:focus-visible,input:focus-visi
           <div class="optRow" style="display:block"><label for="deviceSelector">Thiết bị camera</label><small>iOS có thể chỉ cung cấp camera trước và sau, không cho chọn riêng tele 5x.</small><select id="deviceSelector" class="select" style="margin-top:10px"><option value="auto">Tự động (camera sau)</option></select></div>
         </div>
       </div>
+      <div class="sectionHeader"><h2>Cập nhật MoonCam</h2><span id="appVersionLabel">Phiên bản 1.8.0</span></div>
+      <div class="optionBlock" id="updateSettings">
+        <div class="optHead"><label>Luôn dùng bản mới</label><output id="updateStatus">Đang kiểm tra…</output></div>
+        <p class="appHow" style="margin:0 0 13px">Tự kiểm tra khi mở app, quay lại app và định kỳ trong lúc sử dụng. Chỉ làm mới khi an toàn, không tải lại trang trong lúc quay, lưu video hoặc chơi game.</p>
+        <button type="button" id="checkUpdateBtn" class="updateActionButton">⟳ Kiểm tra cập nhật</button>
+      </div>
       <div class="sectionHeader"><h2>Thêm vào Màn hình chính</h2></div>
       <div class="optionBlock" style="color:#b8c0d0;font-size:12px;line-height:1.85"><strong style="color:white">Trên iPhone:</strong> Mở website qua Safari → bấm <b>Chia sẻ</b> → <b>Thêm vào Màn hình chính</b> → <b>Thêm</b>. Website phải được chạy qua HTTPS để dùng camera (không mở file HTML trực tiếp trong Tệp).</div>
       <div class="notice"><svg><use href="#info"/></svg><div><b>Quyền riêng tư</b><br>Nút Tắt camera gọi stop() trên mọi luồng camera/micro, không chỉ ẩn hình xem trước. Web app không gửi video lên máy chủ; dữ liệu chỉ xử lý trên thiết bị. Video có thể chiếm nhiều dung lượng. Xóa dữ liệu Safari cũng có thể xóa thư viện của ứng dụng.</div></div>
@@ -511,7 +524,7 @@ button:focus-visible,select:focus-visible,summary:focus-visible,input:focus-visi
 <section class="gameStudio" id="gameStudio" role="dialog" aria-modal="true" aria-hidden="true" aria-label="MoonCam Play & Record">
   <div class="gameAmbient" aria-hidden="true"></div>
   <header class="gameHeader">
-    <div class="gameBrand"><div class="gameBrandMark"><svg><use href="#gamepad"/></svg></div><div><strong>MOON<span>PLAY</span></strong><small>PLAY & RECORD / v1.6</small></div></div>
+    <div class="gameBrand"><div class="gameBrandMark"><svg><use href="#gamepad"/></svg></div><div><strong>MOON<span>PLAY</span></strong><small>GAME EDITION / v1.8</small></div></div>
     <button type="button" class="gameClose" id="gameCloseBtn" aria-label="Đóng trò chơi và quay về camera"><svg><use href="#x"/></svg></button>
   </header>
   <div class="gameStudioBody">
@@ -523,7 +536,7 @@ button:focus-visible,select:focus-visible,summary:focus-visible,input:focus-visi
     <nav class="gamePicker" aria-label="Chọn trò chơi">
       <button type="button" class="gameChoice selected" data-game="meteor" aria-pressed="true"><span class="gameEmoji">🚀</span><span>Thiên thạch</span></button>
       <button type="button" class="gameChoice" data-game="merge" aria-pressed="false"><span class="gameEmoji">🧩</span><span>2048</span></button>
-      <button type="button" class="gameChoice" data-game="tap" aria-pressed="false"><span class="gameEmoji">✨</span><span>Săn sao</span></button>
+      
     </nav>
     <div class="gameViewport" id="gameViewport">
       <iframe id="gameFrame" title="Trò chơi MoonCam" sandbox="allow-scripts" referrerpolicy="no-referrer" tabindex="0"></iframe>
@@ -541,6 +554,11 @@ button:focus-visible,select:focus-visible,summary:focus-visible,input:focus-visi
   </footer>
 </section>
 
+<div id="appUpdateNotice" class="updateNotice" role="status" aria-live="polite" hidden>
+  <div class="updateNoticeText"><strong id="updateNoticeTitle">MoonCam có bản mới</strong><span id="updateNoticeDesc">Cập nhật an toàn, không mất dữ liệu video đã lưu.</span></div>
+  <button type="button" id="updateNowBtn">Cập nhật</button>
+  <button type="button" id="updateLaterBtn" aria-label="Để sau" title="Để sau">✕</button>
+</div>
 <div class="modal" id="mediaModal"><button class="modalClose" id="closeModal">Đóng ✕</button><div id="modalContent"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
@@ -813,7 +831,7 @@ function element(tag,cls,text){const el=document.createElement(tag);if(cls)el.cl
 function actionBtn(iconName,descr,action){const btn=element('button','miniBtn');btn.setAttribute('aria-label',descr);btn.title=descr;btn.innerHTML=`<svg><use href="#${iconName}"/></svg>`;btn.addEventListener('click',action);return btn}
 async function refreshLibrary(){const media=await all('media').catch(()=>[]);media.sort((a,b)=>b.date-a.date);$('countInfo').textContent=media.length+' mục';$('libraryCount').textContent=media.length?'('+media.length+')':'';$('emptyGallery').style.display=media.length?'none':'block';$('mediaList').replaceChildren();media.forEach(item=>{const row=element('div','mediaItem');const symbol=element('div','mediaIcon');symbol.innerHTML=`<svg><use href="#${item.type==='photo'?'gallery':'record'}"/></svg>`;const info=element('div','mediaInfo');info.append(element('b','',item.name));info.append(element('small','',`${item.type==='photo'?'Ảnh':'Video'} · ${formatBytes(item.size)}${item.duration?' · '+timeFormat(item.duration/1000):''}`));const actions=element('div','mediaActions');actions.append(actionBtn('play','Xem',()=>openMedia(item.id)));actions.append(actionBtn('download','Tải về',()=>downloadMedia(item.id)));actions.append(actionBtn('trash','Xóa',async()=>{if(!confirm('Xóa bản ghi này khỏi bộ nhớ web?'))return;await del('media',item.id).catch(()=>{});refreshLibrary()}));row.append(symbol,info,actions);$('mediaList').append(row)});
  const pending=await all('pending').catch(()=>[]);$('recoveryList').replaceChildren();for(const p of pending){if(state.recordId===p.id)continue;const row=element('div','mediaItem');const ico=element('div','mediaIcon');ico.innerHTML='<svg><use href="#warning"/></svg>';const info=element('div','mediaInfo');info.append(element('b','','Bản ghi bị gián đoạn'));info.append(element('small','',new Date(p.start).toLocaleString('vi-VN')));const acts=element('div','mediaActions');acts.append(actionBtn('download','Thử khôi phục',async()=>{const segments=await chunksFor(p.id);if(!segments.length){toast('Không có dữ liệu tạm để khôi phục.');return}segments.sort((a,b)=>a.seq-b.seq);const mime=p.mime||'video/mp4';const blob=new Blob(segments.map(x=>x.blob),{type:mime});const ext=mime.includes('webm')?'webm':'mp4';const id='recover-'+p.id;await put('media',{id,name:`MoonCam_khoi_phuc_${p.id}.${ext}`,date:p.start,mime,type:'video',size:blob.size,blob}).catch(()=>{});toast('Đã ghép dữ liệu tạm. Video MP4 có thể không phát được nếu thiếu phần kết.');await del('pending',p.id);await deleteChunks(p.id);refreshLibrary()}));acts.append(actionBtn('trash','Xóa dữ liệu tạm',async()=>{if(!confirm('Xóa dữ liệu quay tạm?'))return;await del('pending',p.id);await deleteChunks(p.id);refreshLibrary()}));row.append(ico,info,acts);$('recoveryList').append(row)}}
-(async()=>{loadPrivacyPreferences();updatePrivacyUI();updateToggles();if(!window.isSecureContext){$('permissionCover').querySelector('p').textContent='Cần website HTTPS để dùng camera trên iPhone. Mở file HTML trực tiếp sẽ không hoạt động.'}try{await initDB();refreshLibrary()}catch{toast('Không dùng được bộ nhớ cục bộ. Hãy lưu tệp ngay sau khi quay.')};if('serviceWorker'in navigator&&window.isSecureContext){navigator.serviceWorker.register('./sw.js?v=1.6').catch(()=>{})}})();
+(async()=>{loadPrivacyPreferences();updatePrivacyUI();updateToggles();if(!window.isSecureContext){$('permissionCover').querySelector('p').textContent='Cần website HTTPS để dùng camera trên iPhone. Mở file HTML trực tiếp sẽ không hoạt động.'}try{await initDB();refreshLibrary()}catch{toast('Không dùng được bộ nhớ cục bộ. Hãy lưu tệp ngay sau khi quay.')};if('serviceWorker'in navigator&&window.isSecureContext){navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>reg.update().catch(()=>{})).catch(()=>{})}})();
 
 // v1.5 mobile UI: purely presentational sheet; camera and recorder logic is unchanged.
 (function setupMobileStudio(){
@@ -868,8 +886,8 @@ async function refreshLibrary(){const media=await all('media').catch(()=>[]);med
    state.recorder, cameraPreview or the top-level window location from game actions. */
 (function initGameStudio(){
  const overlay=$('gameStudio'), frame=$('gameFrame'), loader=$('gameLoader');
- const names={meteor:'Thiên thạch',merge:'2048',tap:'Săn sao'};
- const paths={meteor:'./games/meteor.html',merge:'./games/merge.html',tap:'./games/tap.html'};
+ const names={meteor:'Thiên thạch',merge:'2048'};
+ const paths={meteor:'./games/meteor.html',merge:'./games/merge.html'};
  let current='meteor', initial=false;
  function gameVisible(){return overlay.classList.contains('open')}
  function loadGame(key){
@@ -903,7 +921,15 @@ async function refreshLibrary(){const media=await all('media').catch(()=>[]);med
    finally{b.disabled=false;updateGameRecordingUI()}
  });
  window.addEventListener('message',e=>{
-   if(e.source!==frame.contentWindow||!e.data||e.data.type!=='moonplay-score'||!names[e.data.game])return;
+   if(e.source!==frame.contentWindow||!e.data||!names[e.data.game])return;
+   if(e.data.type==='moonplay-best-request'){
+     const game=e.data.game;
+     let saved=0;
+     try{saved=Number(localStorage.getItem('moonplay-highscore-'+game))||0}catch{}
+     frame.contentWindow?.postMessage({type:'moonplay-best-value',game,best:saved},'*');
+     return;
+   }
+   if(e.data.type!=='moonplay-score')return;
    const score=Number(e.data.score);
    if(!Number.isSafeInteger(score)||score<0||score>99999999)return;
    try{const key='moonplay-highscore-'+e.data.game;const best=Math.max(Number(localStorage.getItem(key))||0,score);localStorage.setItem(key,String(best))}catch{}
@@ -930,5 +956,6 @@ function updateGameRecordingUI(){
 }
 
 </script>
+<script src="./updates.js" defer></script>
 </body>
 </html>
