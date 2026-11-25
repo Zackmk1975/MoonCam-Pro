@@ -1,39 +1,40 @@
-MOONCAM PRO – WEB APP CHO IPHONE 15 PRO MAX
-=======================================
+MOONCAM PRO v1.6 — PLAY & RECORD
+================================
 
-1. HƯỚNG DẪN ĐƯA LÊN WEB (KHÔNG CẦN CODE)
-- Giải nén ZIP, giữ nguyên thư mục gồm index.html, sw.js, manifest.webmanifest và icons/.
-- Vào https://app.netlify.com/drop (Netlify Drop) trên máy tính.
-- Kéo toàn bộ thư mục mooncam_pro chứa index.html vào trang.
-- Netlify cung cấp URL HTTPS kiểu https://<ten-ngau-nhien>.netlify.app.
-- Mở URL đó trong SAFARI trên iPhone.
-- Safari → Chia sẻ → Thêm vào Màn hình chính → Thêm.
-- Khởi chạy MoonCam Pro từ biểu tượng ngoài màn hình chính, nhấn Bật camera và cấp quyền.
+THÊM MỚI
+- Tab Trò chơi: ba mini game Thiên thạch / 2048 / Săn sao.
+- Khi game chạy, camera và MediaRecorder vẫn nằm trong trang MoonCam chính.
+- Đổi game / nút Chơi lại chỉ làm mới iframe game, KHÔNG gọi reload trang chính.
+- Trên màn hình game: trạng thái ghi, đồng hồ, dung lượng dữ liệu đã nhận,
+  bắt đầu quay / dừng và lưu, chụp ảnh, chơi lại và thoát game.
+- Trò chơi độc lập trong sandbox, không yêu cầu cấp quyền camera hoặc micro.
+- Ảnh/video lấy trực tiếp từ camera (không có hình ảnh trò chơi).
+- Cập nhật service worker v1.6 để game có thể tải khi offline sau lần mở đầu.
 
-2. CHỨC NĂNG
-- Quay camera trước/sau với âm thanh (khi cho phép).
-- Có thể yêu cầu 720p, 1080p hoặc 4K, FPS 24/30/60. Độ phân giải cuối cùng tùy camera và Safari.
-- Nút chụp ảnh JPEG.
-- Zoom bằng phần cứng chỉ khi Safari thực sự hỗ trợ API zoom.
-- Lưu thư viện video/ảnh trên thiết bị qua IndexedDB, rồi tải video sang Tệp/Ảnh.
-- Có bản sao dữ liệu ghi tạm theo đoạn để thử khôi phục nếu bị gián đoạn (không bảo đảm tệp MP4 phát được).
-- Giao diện PWA standalone, hoạt động không cần mạng sau lần tải đầu nếu được lưu cache.
+LƯU Ý QUAN TRỌNG
+- Sự độc lập ở đây là cấp giao diện / đoạn mã. Nếu game quá nặng khiến iPhone
+  thiếu tài nguyên, FPS video vẫn có thể bị ảnh hưởng. 4K + game không được đảm bảo.
+- Nút Chơi lại hoặc đổi game không tải lại trang MoonCam, nên không chủ động
+  dừng camera hoặc MediaRecorder. Nhưng tải lại toàn bộ trang (Safari Refresh,
+  đóng hẳn web app), khóa màn hình hoặc chuyển sang ứng dụng iOS khác VẪN có
+  thể làm iOS ngắt camera/ghi hình. Không có quyền quay nền đặc biệt cho PWA.
+- Dấu REC/đồng hồ là trạng thái MediaRecorder; bạn cần xem video đã lưu để
+  kiểm tra khung hình thực sự, nhất là khi có gián đoạn.
+- Âm thanh trong game được tắt để giảm nguy cơ âm thanh lọt vào micro.
+- Tệp video chỉ lưu trong bộ nhớ cục bộ của web app, hãy tải về iPhone sau khi quay.
 
-3. GIỚI HẠN QUAN TRỌNG
-- Web app KHÔNG bảo đảm quay camera tiếp khi chuyển hẳn sang ứng dụng khác hoặc khóa iPhone.
-- iOS có thể dừng hoặc tắt camera khi app vào nền; các khung hình có thể bị thiếu.
-- WebKit đôi khi gặp lỗi camera trong PWA; nếu không cấp quyền được hãy thử bằng Safari.
-- Ứng dụng cần HTTPS. Mở trực tiếp index.html bằng Tệp không cấp được quyền camera như web HTTPS.
-- Dung lượng lưu IndexedDB có giới hạn và có thể bị hệ thống xóa. Tải video về ngay sau khi quay.
-- Không cần server phụ trợ; video không được gửi đi.
-- Thao tác 4K/60FPS và quay tele riêng không được bảo đảm trên Safari.
+CÀI ĐẶT
+1. Giải nén ZIP.
+2. Upload *toàn bộ* thư mục, bao gồm index.html, sw.js, manifest.webmanifest,
+   icons/ và games/ lên Netlify hoặc bất kỳ host HTTPS tĩnh nào.
+3. Mở website trong Safari trên iPhone 15 Pro Max và thêm vào Màn hình chính.
+4. Mở camera, cấp quyền, bấm nút quay, rồi chọn tab 'Trò chơi'.
+5. Để thử không ngắt bản ghi: quay 15 giây -> mở game -> đổi game 2 lần ->
+   chơi lại 3 lần -> trở lại camera -> dừng và lưu -> kiểm tra video thực tế.
+6. Có thể thử khởi động game rồi mới bấm 'Bắt đầu quay' trong màn hình game.
 
-4. QUYỀN RIÊNG TƯ
-- Toàn bộ xử lý camera/lưu trữ nằm trên trình duyệt; không upload tệp nào tới máy chủ.
-- Phải tự cấp quyền cho camera/micro khi website yêu cầu.
-
-5. TÙY CHỈNH
-- Có thể đổi tên và icon trong manifest.webmanifest và thư mục icons.
-- Thay đổi màu, chữ và bố cục trong index.html.
-
-Phiên bản: 1.0
+KHẢ NĂNG TƯƠNG THÍCH
+- Cần HTTPS (localhost dùng được khi thử trên máy tính).
+- Tùy phiên bản iOS/Safari mà định dạng video, FPS, quyền camera và
+  MediaRecorder có thể khác nhau. Chưa có bảo đảm 4K khi chơi game.
+- Để hạn chế giật khung hình: ưu tiên 1080p/30fps và giảm hiệu ứng không cần thiết.
