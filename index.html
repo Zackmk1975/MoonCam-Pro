@@ -2,16 +2,16 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#090b13">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#080b14">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MoonCam Pro">
-  <meta name="description" content="MoonCam Pro – quay video camera trực tiếp, chụp ảnh và lưu video trên iPhone.">
+  <meta name="description" content="MoonCam Pro – giao diện quay phim cho iPhone: quay, chụp, đổi góc, che xem trước và lưu cục bộ.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./icons/icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-  <title>MoonCam Pro v1.2 · Camera Studio</title>
+  <title>MoonCam Pro v1.6 · Play & Record</title>
   <style>
     :root{color-scheme:dark;--bg:#090b13;--surface:#151926;--surface2:#1b2130;--border:#303648;--text:#f7f8fc;--muted:#9ca5b6;--accent:#b2a4ff;--accent2:#5cd9dc;--red:#ff555f;--green:#7be2b2;--r:20px;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif}
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -62,8 +62,282 @@
     .toast{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 24px);left:50%;transform:translate(-50%,15px);z-index:101;max-width:min(90vw,450px);background:#323044;color:white;border:1px solid #68617e;box-shadow:0 18px 44px #0009;border-radius:14px;padding:13px 16px;font-size:12px;line-height:1.55;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}.toast.show{opacity:1;transform:translate(-50%,0)}
     .toplink{color:#c5baff;font-size:12px;font-weight:760;text-decoration:none}.appHow{color:#a2adbf;font-size:11px;line-height:1.65;margin:10px 4px 0}.appHow strong{color:white}
     #platformWarning{margin:0 1px;color:#f0c2aa;font-size:11px;line-height:1.55;display:none}
+
+    /* Privacy modes modify ONLY the displayed HTML video element. MediaRecorder receives
+       the original MediaStream, and still photography uses drawImage(video), not the DOM.
+       Keeping these separate means preview effects are never baked into saved output. */
+    .cameraShell.preview-blur #cameraPreview{filter:blur(var(--preview-blur,18px));transform:scale(1.10)}
+    #cameraPreview{transition:filter .22s ease,transform .22s ease}
+    .previewMask{position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .2s;background:#060914;display:grid;place-items:center;text-align:center;padding:28px}
+    .cameraShell.preview-cover .previewMask,.cameraShell.preview-image .previewMask{opacity:1;visibility:visible}
+    .cameraShell.preview-image .previewMask{background:#050712}
+    .previewMask img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+    .cameraShell.preview-image .previewMask.hasImage img{display:block}
+    .previewMaskBody{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:11px;color:#c9c7e7;filter:drop-shadow(0 3px 12px #000d)}
+    .previewMaskBody strong{font-size:15px;color:#f5f2ff}.previewMaskBody small{font-size:11px;line-height:1.7;max-width:220px}
+    .cameraShell.preview-image .previewMask.hasImage .previewMaskBody{display:none}
+    .privacyPanel{border:1px solid #3a3555;border-radius:18px;background:linear-gradient(145deg,#211f35,#171b28);padding:14px;margin-top:13px}
+    .privacyPanelTitle{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:10px;font-size:12px;font-weight:770}
+    .privacyTag{font-size:9px;color:#d8d1ff;border:1px solid #736ca6;padding:4px 7px;border-radius:8px;white-space:nowrap}
+    .privacyModes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+    .privacyMode{font-size:11px;font-weight:750;border:1px solid #41435f;background:#2b3042;color:#b9c1d3;padding:10px 3px;border-radius:11px;min-width:0}
+    .privacyMode.active{background:#7468bf40;color:#f4edff;border-color:#b5a5ff}
+    .privacySettings{margin:13px 0 3px;display:flex;flex-direction:column;gap:9px}
+    .privacySettings[hidden]{display:none}
+    .privacySlideLabel{display:flex;align-items:center;justify-content:space-between;color:#bcc6d8;font-size:11px}
+    .privacyFileLabel{display:flex;justify-content:center;align-items:center;gap:9px;min-height:40px;padding:9px;border-radius:10px;border:1px dashed #8073b9;color:#ebe4ff;font-size:12px;font-weight:700}
+    .privacyFileLabel input{max-width:180px;font-size:10px}
+    .privacyActions{display:flex;gap:8px;margin-top:12px}
+    .privacyStageBtn{border:1px solid #635a94;border-radius:11px;background:#322c52;color:#f4eaff;font-size:12px;font-weight:750;padding:11px;flex:1}
+    .privacyPanel .privacyHelp{margin:11px 0 0;font-size:10px;color:#a4a7c0;line-height:1.55}
+    .privacyStage{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:max(65px,env(safe-area-inset-top)) 24px max(36px,env(safe-area-inset-bottom));background:radial-gradient(ellipse at 50% 13%,#1f2441 0%,#080b14 58%,#06070f 100%);color:#f3f1fc;text-align:center}
+    .privacyStage.show{display:flex}
+    .privacyStageClock{font-size:clamp(58px,16vw,108px);font-weight:200;letter-spacing:-4px;font-variant-numeric:tabular-nums;margin-top:10dvh}
+    .privacyStageDate{color:#c2c6d9;font-size:15px;margin-top:5px}
+    .privacyStageStatus{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:22px;color:#b6bcd3;font-size:11px;line-height:1.6}
+    .privacyLiveDot{height:9px;width:9px;background:#6cdaae;border-radius:50%;box-shadow:0 0 10px #6cdaae69}
+    .privacyLiveDot.recording{background:#ff5763;box-shadow:0 0 14px #ff576366;animation:blink 1s infinite}
+    .privacyStageActions{width:min(100%,380px);display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .privacyStageActions button{background:#262c41;border:1px solid #4b526a;border-radius:15px;padding:15px 7px;color:#f1eefb;font-weight:750;font-size:12px}
+    .privacyStageActions .restore{grid-column:1/-1;background:#beb3ff;color:#20182f;border-color:#bfb5ff;font-size:14px}
+    .privacyStageFoot{font-size:10px;color:#858ca7;max-width:300px;line-height:1.6;margin-bottom:16px}
     @media(min-width:850px){.shell{padding-top:40px}.cameraShell{height:560px}.galleryEmpty{margin-top:20px}}
     @media(max-width:360px){.shell{padding-left:12px;padding-right:12px}.controls{grid-template-columns:1fr 94px 1fr}.tab{padding:9px 12px}.recordBtn{width:79px;height:79px}.cameraShell{height:50dvh}}
+
+/* MOONCAM IMMERSIVE STUDIO v1.4 - UI layer only: never composited into captured media. */
+.stagePickerLabel{font-size:11px;font-weight:780;color:#e2ddfb;margin:13px 0 8px;display:flex;align-items:center;justify-content:space-between}
+.stageThemeTray{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.stageThemePick{min-width:0;position:relative;overflow:hidden;min-height:74px;border-radius:12px;border:1px solid #494660;background:linear-gradient(145deg,#132239,#10131d);color:#eceeff;padding:6px 5px;display:flex;align-items:flex-end;justify-content:center;font-size:10px;font-weight:790;isolation:isolate}
+.stageThemePick:after{content:'';position:absolute;inset:0;background:linear-gradient(transparent 35%,#050818ec 97%);z-index:-1}
+.stageThemePick[data-theme='cosmos']{background:radial-gradient(circle at 58% 29%,#c5b2ff 0 8%,#6b62ba 10% 20%,transparent 21%),radial-gradient(ellipse at 20% 10%,#27285c,#090d24 75%)}
+.stageThemePick[data-theme='cyber']{background:radial-gradient(circle at 50% 40%,transparent 0 13%,#10e4df 14% 16%,transparent 18% 28%,#266b9a 30% 32%,transparent 34%),linear-gradient(135deg,#07172e,#11214a)}
+.stageThemePick[data-theme='aurora']{background:radial-gradient(ellipse at 30% 10%,#37cdbf 0,transparent 57%),radial-gradient(ellipse at 70% 20%,#8367d4,transparent 60%),#101b2d}
+.stageThemePick[data-theme='retro']{background:linear-gradient(180deg,transparent 25%,#231433 70%,#080916),radial-gradient(circle at 50% 36%,#ffb275 0 21%,transparent 22%),linear-gradient(135deg,#331b53,#080e2e)}
+.stageThemePick[aria-pressed='true']{outline:2px solid #b3a3ff;outline-offset:1px;box-shadow:0 0 18px #7c6dff35}
+.stageMotionControl{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;font-size:11px;color:#bdbed7}
+.stageMotionControl label{font-weight:730}
+.stageMotionControl select{background:#262940;border:1px solid #575471;border-radius:10px;color:#f3efff;font-size:11px;padding:8px;max-width:165px}
+.privacyStage.immersive{position:fixed;inset:0;z-index:90;display:none;flex-direction:column;justify-content:space-between;align-items:stretch;padding:max(env(safe-area-inset-top),20px) 18px max(env(safe-area-inset-bottom),14px);background:#080d1b;overflow:hidden;text-align:left;isolation:isolate;color:#f9f9ff;overscroll-behavior:contain}
+.privacyStage.immersive.show{display:flex}
+.stageBackground{position:absolute;inset:0;z-index:-3;pointer-events:none;transition:background .5s}
+.theme-cosmos .stageBackground{background:radial-gradient(ellipse at 60% 27%,#283778 0%,transparent 52%),radial-gradient(ellipse at 0% 75%,#342449 0%,transparent 45%),#070d22}
+.theme-cyber .stageBackground{background:radial-gradient(ellipse at 50% 41%,#133e59,transparent 55%),repeating-linear-gradient(0deg,transparent 0 27px,#7fe3ff07 28px),#040f1c}
+.theme-aurora .stageBackground{background:radial-gradient(ellipse at 18% 35%,#275c68 0%,transparent 47%),radial-gradient(ellipse at 92% 20%,#563b79,transparent 55%),#070f22}
+.theme-retro .stageBackground{background:linear-gradient(180deg,#10163a 0%,#311942 52%,#080b20 100%)}
+.stageGrain{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.28;background-image:radial-gradient(#fff8 .55px,transparent .7px);background-size:29px 31px;mask-image:linear-gradient(#0007,transparent 90%)}
+.stageHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:none}
+.stageBrand{display:flex;align-items:center;gap:9px;font-size:11px;font-weight:900;letter-spacing:2px}
+.stageBrandIcon{width:30px;height:30px;border:1px solid #ffffff4c;border-radius:10px;display:grid;place-items:center;background:#ffffff16;box-shadow:0 0 18px #a6b7ff22}
+.stageBrandIcon svg{width:17px;height:17px}
+.stageTopTag{border:1px solid #a7a4c04d;background:#ffffff0b;border-radius:20px;color:#cbd6eb;white-space:nowrap;padding:8px 10px;font-size:9px;font-weight:850;letter-spacing:1px}
+.stageTopTag strong{color:#a8f3d3}
+.stageHero{flex:1;position:relative;min-height:275px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;isolation:isolate}
+.stageArtwork{position:relative;width:min(78vw,330px);height:min(78vw,330px);max-height:39dvh;aspect-ratio:1;flex:none;display:grid;place-items:center;transform-style:preserve-3d}
+.stageScene{display:none;position:absolute;inset:0;pointer-events:none}
+.theme-cosmos .scene-cosmos,.theme-cyber .scene-cyber,.theme-aurora .scene-aurora,.theme-retro .scene-retro{display:block}
+.stageCopy{position:relative;z-index:3;text-align:center;margin-top:-4px;max-width:370px;pointer-events:none}
+.stageEyebrow{font-size:9px;letter-spacing:4px;color:#b2bfef;font-weight:850}
+.stageTitle{font-weight:850;letter-spacing:-1.5px;font-size:clamp(23px,7vw,32px);margin:7px 0 4px;line-height:1.1;text-shadow:0 4px 22px #0008}
+.stageSub{margin:0;color:#abb9d3;letter-spacing:.15px;font-size:11px;line-height:1.5}
+.stageClockStrip{margin-top:18px;display:flex;justify-content:center;align-items:center;gap:10px;color:#d9e4ff}
+.stageClock{font-size:clamp(25px,8.2vw,38px);line-height:1;font-weight:280;letter-spacing:-1.6px;font-variant-numeric:tabular-nums}
+.stageDate{font-size:10px;max-width:115px;line-height:1.45;color:#a4b1cf;text-align:left}
+.stageBottom{position:relative;z-index:4;flex:none;width:min(100%,500px);margin-inline:auto;display:flex;flex-direction:column;gap:9px}
+.stageMonitor{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#ffffff0c;border:1px solid #ffffff2a;padding:9px 11px;border-radius:12px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.stageMonitor .stageMonitorLeft{display:flex;align-items:center;gap:7px;min-width:0}
+.stageMonitor .stageMonitorText{font-size:10px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stageElapsed{font-size:13px;letter-spacing:1px;font-weight:780;font-variant-numeric:tabular-nums}
+.stageMonitor .privacyLiveDot{flex:none}
+.stageThemeNav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.stageThemeBtn{background:#ffffff10;border:1px solid #ffffff27;border-radius:10px;padding:10px 4px;color:#acb6d0;font-size:10px;font-weight:800}
+.stageThemeBtn[aria-pressed='true']{color:white;border-color:#b1a5ff;background:#b1a5ff36;box-shadow:inset 0 0 0 1px #b1a5ff17}
+.stageActionRow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.stageActionRow button{border-radius:12px;min-height:44px;border:1px solid #ffffff29;background:#ffffff12;color:#e3eafc;padding:10px 5px;font-size:11px;font-weight:800}
+.stageActionRow button:disabled{opacity:.36}
+.stageActionRow #stageStopBtn{background:#ff56721a;border-color:#ff718255;color:#ffd8e0}
+.stageActionRow #stagePowerBtn{background:#d9987316;color:#ffdfce}
+.stageRestoreBtn{border:1px solid #d2c7ff;background:linear-gradient(115deg,#cfbdff,#aab7ff);color:#1c1a35;border-radius:13px;min-height:48px;font-size:13px;font-weight:860;width:100%}
+.stageFoot{font-size:9px;color:#9ba6c1;text-align:center;line-height:1.4;margin:1px auto 0;max-width:370px}
+.stagePulseButton{position:absolute;inset:auto 0 5px;margin:auto;width:105px;height:27px;white-space:nowrap;z-index:5;background:#ffffff13;border:1px solid #ffffff2c;color:#e2eaff;border-radius:99px;font-size:9px;font-weight:800;letter-spacing:.5px}
+/* Stars and orbital cosmic sphere */
+.cosmicGlow{position:absolute;inset:9%;border-radius:50%;background:#5353bd4a;filter:blur(43px)}
+.cosmicPlanet{position:absolute;inset:24%;border-radius:50%;background:radial-gradient(circle at 29% 24%,#eee1ff 0%,#aba2ec 18%,#7465bb 43%,#3a417c 67%,#171d42 91%);box-shadow:inset -19px -17px 30px #0b163b99,inset 8px 8px 18px #ffffff4d,0 0 45px #a7a2ff55;animation:cosmicBreath 7s ease-in-out infinite}
+.cosmicPlanet:before{content:'';position:absolute;inset:0;border-radius:50%;opacity:.4;background:radial-gradient(ellipse at 70% 70%,#ebe5ff38 0 9%,transparent 18%),radial-gradient(ellipse at 25% 55%,#1b30652f 0 11%,transparent 23%),radial-gradient(circle at 72% 25%,#2c266b75 0 5%,transparent 9%)}
+.orbitRing{position:absolute;inset:13%;border:1px solid #a6b5ff73;border-radius:50%;transform:rotateX(66deg) rotate(-24deg);box-shadow:0 0 18px #bbb7ff39,inset 0 0 20px #bbb7ff17}
+.orbitRing.r2{inset:7%;transform:rotateX(73deg) rotate(53deg);border-style:dashed;opacity:.57}
+.orbitNode{position:absolute;top:14%;left:14%;width:11px;height:11px;border-radius:50%;background:#fff;box-shadow:0 0 15px #a9bbff;animation:orbitFloat 10s ease-in-out infinite alternate}
+.star{position:absolute;width:2px;height:2px;border-radius:50%;background:white;box-shadow:0 0 10px #cbd5ff;animation:starTwinkle var(--dur,3s) ease-in-out infinite alternate;opacity:var(--alpha,.55)}
+.scene-cosmos:after{content:'';position:absolute;left:1%;top:39%;width:45px;height:1px;background:linear-gradient(90deg,transparent,#f0e8ff);transform:rotate(-38deg);animation:meteorFly 8s linear infinite;opacity:.65}
+/* Cyber: rotating concentric HUD, decorative—not actual signals */
+.hudGrid{position:absolute;inset:0;border-radius:50%;background:repeating-linear-gradient(90deg,transparent 0 20px,#2af1ff0c 21px),repeating-linear-gradient(0deg,transparent 0 20px,#2af1ff0c 21px);mask-image:radial-gradient(circle,#000 52%,transparent 74%)}
+.hudOuter{position:absolute;inset:7%;border-radius:50%;border:2px dashed #46e7ff6b;box-shadow:0 0 32px #00cde321, inset 0 0 40px #00bdd314;animation:spin 32s linear infinite}
+.hudRing{position:absolute;inset:20%;border-radius:50%;background:conic-gradient(from 20deg,transparent 0 55deg,#56e1f9 55deg 80deg,transparent 80deg 140deg,#c4a2ff 140deg 158deg,transparent 158deg 290deg,#45dff3 290deg 302deg,transparent 302deg);mask-image:radial-gradient(transparent 0 60%,#000 61% 66%,transparent 67%);animation:spin 12s linear infinite reverse}
+.hudCore{position:absolute;inset:32%;border-radius:50%;background:radial-gradient(circle at 40% 40%,#defcff,#41d9ef 23%,#1e6d98 60%,#082b55 95%);box-shadow:0 0 50px #04d9e779,inset 0 0 20px #ccfaff55;animation:cosmicBreath 4s ease-in-out infinite}
+.hudScan{position:absolute;inset:7%;border-radius:50%;background:conic-gradient(from 0deg,#27f8ff00 0%,#2ddbee00 72%,#2cefff20 95%,#3aebee99 100%);mask-image:radial-gradient(circle,#000 61%,transparent 64%);animation:spin 6s linear infinite}
+.hudData{position:absolute;font-size:10px;color:#79e3f5;font-weight:800;letter-spacing:2px;opacity:.78}.hudData.a{top:13%;left:3%}.hudData.b{bottom:19%;right:1%}
+/* Aurora: light curtains and breathing celestial light */
+.auroraRibbon{position:absolute;width:78%;height:95%;top:-8%;left:4%;border-radius:50%;background:linear-gradient(105deg,transparent 8%,#5aeed714 27%,#42f1bb9d 44%,#af8bf566 57%,transparent 76%);filter:blur(17px);transform:rotate(20deg) skewX(-12deg);animation:auroraWave 8s ease-in-out infinite alternate}
+.auroraRibbon.r2{left:30%;top:8%;height:75%;background:linear-gradient(105deg,transparent,#55c1e7a6,#9b67df66,transparent);animation-duration:11s;animation-delay:-3s}
+.auroraMoon{position:absolute;width:43%;aspect-ratio:1;top:20%;left:29%;border-radius:50%;background:radial-gradient(circle at 42% 32%,#ffffff,#d9ecf4 50%,#9ab9d6 90%);box-shadow:0 0 80px 18px #92c5ff3d,inset -14px -12px 25px #7a9fb55c;animation:cosmicBreath 8s ease-in-out infinite}
+.auroraHills{position:absolute;inset:auto 0 0;height:32%;background:#071728;clip-path:polygon(0 71%,11% 62%,23% 73%,37% 40%,51% 70%,69% 36%,79% 62%,94% 44%,100% 56%,100% 100%,0 100%)}
+.auroraHills.back{bottom:4%;background:#193448;filter:blur(1px);opacity:.9;transform:scale(1.05)}
+/* Retro skyline + sun + horizon */
+.retroSun{position:absolute;top:16%;left:27%;width:46%;aspect-ratio:1;border-radius:50%;background:linear-gradient(#fce8ab,#f38b9c 61%,#a04dca);box-shadow:0 0 60px #f4a96b77;mask-image:repeating-linear-gradient(to bottom,#000 0 14px,transparent 15px 17px,#000 18px 30px);animation:cosmicBreath 6s ease-in-out infinite}
+.retroHorizon{position:absolute;inset:67% -12% -5%;border-top:1px solid #ff79d4;background:repeating-linear-gradient(90deg,transparent 0 36px,#ee76ec43 37px 38px),repeating-linear-gradient(0deg,transparent 0 24px,#ea69dc55 25px 26px);transform:perspective(150px) rotateX(55deg);box-shadow:0 -8px 30px #bc5acb30}
+.retroBuilding{position:absolute;bottom:28%;height:var(--h);left:var(--x);width:var(--w,25px);background:linear-gradient(90deg,#0b1533,#19264c);border-top:1px solid #b87af4;box-shadow:inset 0 0 8px #6778df29;clip-path:polygon(0 7%,18% 7%,18% 0,100% 0,100% 100%,0 100%)}
+.retroBuilding:after{content:'';position:absolute;inset:8px 6px;background:radial-gradient(#ffa9e7 1px,transparent 2px);background-size:9px 12px;opacity:.7}
+/* Click-triggered stage effect */
+.stageImpact{position:absolute;inset:20%;border-radius:50%;border:2px solid #d1ddff;opacity:0;pointer-events:none}
+.stageImpact.burst{animation:impactPulse 800ms ease-out 1}
+.motion-off .stageScene *, .motion-off .stageScene *::before,.motion-off .stageScene *::after{animation:none!important;transition:none!important}
+.motion-off .stageImpact{animation:none!important}
+.motion-off .stagePulseButton{opacity:.42}
+@media(prefers-reduced-motion:reduce){.privacyStage.immersive .stageScene *,.privacyStage.immersive .stageScene *::before,.privacyStage.immersive .stageScene *::after{animation:none!important}}
+@keyframes cosmicBreath{50%{transform:scale(1.055);filter:brightness(1.1)}}
+@keyframes orbitFloat{50%{transform:translate(150px,120px) scale(.62);opacity:.45}100%{transform:translate(215px,-20px) scale(1.05)}}
+@keyframes starTwinkle{to{opacity:.18;transform:scale(.6)}}
+@keyframes meteorFly{50%{opacity:0;transform:translate(80px,80px) rotate(-38deg)}100%{opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes auroraWave{to{transform:translateX(40px) rotate(-2deg) skewX(16deg);filter:blur(22px)}}
+@keyframes impactPulse{0%{opacity:.9;transform:scale(.35)}100%{opacity:0;transform:scale(2.6)}}
+@media(max-height:730px){.privacyStage.immersive{padding-top:max(env(safe-area-inset-top),12px);gap:4px}.stageArtwork{width:min(58vw,225px);height:min(58vw,225px)}.stageHero{min-height:225px}.stageCopy{margin-top:-8px}.stageClockStrip{margin-top:8px}.stageBottom{gap:6px}.stageFoot{font-size:8px}.stageThemeBtn{padding:7px 3px}}
+@media(max-width:360px){.privacyStage.immersive{padding-left:12px;padding-right:12px}.stageArtwork{width:250px;height:250px}.stageTopTag{font-size:8px}.stageSub{font-size:10px}}
+
+
+/* MoonCam Pro v1.5 · Mobile-first layout and touch affordances */
+:root{--tap:48px;--glass:rgba(19,24,39,.85);--nav:rgba(24,29,47,.94)}
+html{overscroll-behavior:none}body{overflow-x:hidden}
+button,select,input{touch-action:manipulation}
+button:focus-visible,select:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid #c8bbff;outline-offset:3px}
+.mobileSheetHeader{display:none}
+.quickActionBar{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:9px;margin-top:10px}
+.quickActionBtn{display:inline-flex;justify-content:center;align-items:center;gap:7px;border-radius:14px;min-height:48px;background:#212538;color:#e9e9fd;border:1px solid #36394e;font-size:12px;font-weight:760;padding:6px;white-space:nowrap}
+.quickActionBtn svg{width:18px;height:18px;color:#b9adff}
+.quickActionBtn:active,.stageThemePick:active,.tab:active,.powerBtn:active,.seg:active{transform:scale(.97)}
+.quickActionBar .powerBar{margin:0;min-width:0}
+.quickActionBar .powerBtn{min-height:48px;min-width:0;max-width:100%;padding:6px;border-radius:14px;font-size:12px;gap:5px}
+.quickActionBar .powerBtn svg{width:17px;height:17px}
+.cameraMore{margin-top:12px;border:1px solid #30364d;border-radius:16px;background:#171b2a;overflow:hidden}
+.cameraMore>summary{display:flex;align-items:center;gap:10px;padding:13px 15px;list-style:none;font-size:12px;font-weight:750;color:#e6e9fc;min-height:48px;cursor:pointer}
+.cameraMore>summary::-webkit-details-marker{display:none}
+.cameraMore>summary svg{width:18px;height:18px;color:#b3a8ff}
+.cameraMore>summary .moreChevron{margin-left:auto;transition:transform .2s}
+.cameraMore[open]>summary .moreChevron{transform:rotate(180deg)}
+.cameraMore>.sectionHeader,.cameraMore>.options,.cameraMore>.notice{margin-left:12px;margin-right:12px}
+.cameraMore>.notice{margin-bottom:12px}
+.viewfinderCorners{position:absolute;inset:23% 15%;pointer-events:none;z-index:2;opacity:.16}
+.viewfinderCorners i{position:absolute;width:16px;height:16px;border-color:#f8f6ff;border-style:solid}
+.viewfinderCorners i:nth-child(1){top:0;left:0;border-width:1px 0 0 1px}
+.viewfinderCorners i:nth-child(2){top:0;right:0;border-width:1px 1px 0 0}
+.viewfinderCorners i:nth-child(3){bottom:0;left:0;border-width:0 0 1px 1px}
+.viewfinderCorners i:nth-child(4){bottom:0;right:0;border-width:0 1px 1px 0}
+.uiSheetBackdrop{display:none}
+@media(max-width:700px){
+ html,body{height:100%;max-height:100dvh}
+ body{background:radial-gradient(ellipse at 50% -12%,#222440 0%,transparent 60%),#080b14}
+ .shell{width:100%;height:100dvh;min-height:0;max-width:600px;padding:max(env(safe-area-inset-top),12px) 13px calc(env(safe-area-inset-bottom) + 78px);gap:9px;overflow:hidden}
+ .topbar{padding:0 3px;min-height:45px;flex:none}
+ .identity{gap:10px}.logo{width:37px;height:37px;border-radius:13px;box-shadow:0 8px 20px #8c76ff28}.logo svg{width:23px!important;height:23px!important}
+ .identity strong{font-size:16px;letter-spacing:-.55px}.identity small{font-size:9px;letter-spacing:1.3px;margin-top:2px}
+ .iconBtn{height:42px;width:42px;border-radius:14px}
+ .tabs{position:fixed;z-index:70;left:50%;bottom:calc(env(safe-area-inset-bottom) + 6px);transform:translateX(-50%);width:min(calc(100% - 24px),530px);min-height:65px;max-width:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;padding:5px;border:1px solid #ffffff20;border-radius:23px;background:var(--nav);box-shadow:0 12px 36px #000a,inset 0 1px #ffffff10;backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px)}
+ .tab{flex-direction:column;gap:4px;border-radius:18px;padding:7px 3px 6px;min-width:0;min-height:53px;font-size:11px;font-weight:720;white-space:nowrap}
+ .tab.active{background:linear-gradient(135deg,#63598f,#443d73);color:#fff;box-shadow:0 5px 18px #0004}
+ .tab svg{width:20px;height:20px}.tab span{font-size:9px}
+ main{flex:1;min-height:0;overflow:hidden}
+ .view{height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .view::-webkit-scrollbar{display:none}
+ #view-capture.active{display:flex;flex-direction:column;gap:9px}
+ .cameraShell{position:relative;flex:1 1 auto;min-height:245px;height:auto;max-height:none;border-radius:24px;border-color:#45465b;box-shadow:0 16px 32px #0008;margin:0}
+ .noCamera{padding:18px;gap:8px}.moon{width:88px;height:88px;margin-bottom:10px}
+ .noCamera h2{font-size:17px}.noCamera p{font-size:12px;line-height:1.55;max-width:250px}.startCamera{min-height:44px;font-size:13px}
+ .camTop{padding:13px 12px 44px}.pill{font-size:10px;padding:8px 9px;border-radius:11px}
+ .camBottom{padding:42px 12px 13px;font-size:10px}
+ .crosshair{opacity:.35}
+ .controls{flex:0 0 89px;grid-template-columns:1fr 95px 1fr;gap:8px;padding:0 9px;margin:0;min-height:89px}
+ .recordBtn{width:79px;height:79px;box-shadow:0 0 0 6px #f4f0fc0b}.recordBtn .inner{width:56px;height:56px}
+ .sideControl{min-width:0;min-height:81px;gap:5px;font-size:11px}.circleControl{width:49px;height:49px}
+ .quickActionBar{margin:0;flex:0 0 49px;gap:8px;grid-template-columns:1fr 1fr 1.16fr}
+ .quickActionBtn,.quickActionBar .powerBtn{min-height:49px;font-size:11px;border-radius:14px;gap:6px}
+ .quickActionBtn svg{width:17px;height:17px;flex:none}
+ .quickActionBar .powerBtn svg{width:16px;height:16px;flex:none}
+ .cameraMore{margin:0;flex:none}
+ .cameraMore>summary{min-height:45px;padding:10px 14px}
+ #captureHint{display:none}
+ #platformWarning{background:#3b271d;border:1px solid #76513c;padding:12px;border-radius:12px;margin:0}
+ #resumeCard{flex:none}
+ .privacyPanel{position:fixed;z-index:84;left:50%;bottom:calc(env(safe-area-inset-bottom) + 82px);width:min(calc(100vw - 20px),550px);max-height:min(74dvh,650px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;margin:0;padding:0 15px 18px;border:1px solid #5a5377;border-radius:24px;background:linear-gradient(165deg,#24243a 0%,#141a2b 75%);box-shadow:0 18px 70px #000d;transform:translate(-50%,calc(100% + 140px));opacity:0;pointer-events:none;transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .2s}
+ .privacyPanel.open{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+ .mobileSheetHeader{display:block;position:sticky;top:0;z-index:3;padding:8px 0 12px;background:#222338ed;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);margin-bottom:10px}
+ .mobileSheetHandle{display:block;width:35px;height:4px;background:#76748c;border-radius:99px;margin:0 auto 12px}
+ .mobileSheetTitle{display:flex;align-items:center;justify-content:space-between;gap:10px}
+ .mobileSheetTitle strong{display:block;font-size:16px;letter-spacing:-.3px}.mobileSheetTitle small{display:block;color:#aaaec5;font-size:11px;margin-top:5px}
+ .sheetCloseBtn{width:40px;height:40px;flex:none;display:grid;place-items:center;border-radius:13px;border:1px solid #50546e;background:#34354c;color:white}
+ .privacyPanelTitle{font-size:12px}.privacyTag{font-size:9px}
+ .privacyModes{gap:7px}.privacyMode{min-height:46px;font-size:11px}
+ .stageThemePick{min-height:83px;font-size:11px}
+ .stageMotionControl select{min-height:43px;font-size:16px}
+ .privacyStageBtn{min-height:49px;font-size:12px}
+ .uiSheetBackdrop{display:block;position:fixed;inset:0;z-index:82;background:#030512ad;opacity:0;pointer-events:none;transition:opacity .2s}
+ .uiSheetBackdrop.open{opacity:1;pointer-events:auto}
+ .sectionHeader{margin-top:18px}.galleryNote{font-size:12px}
+ .mediaItem{padding:11px;gap:9px}.mediaActions{gap:5px}.miniBtn{min-width:38px;min-height:42px}.mediaIcon{width:43px;height:43px}.mediaInfo b{font-size:11px}.mediaInfo small{font-size:10px}
+ .toggle{height:31px;width:54px}.toggle::before{content:"";position:absolute;inset:-8px -4px}.toggle:after{height:25px;width:25px}.toggle.on:after{transform:translateX(23px)}
+ .optRow{min-height:65px}.select{min-height:48px;font-size:16px}.seg{min-height:45px}
+ .toast{bottom:calc(env(safe-area-inset-bottom) + 87px);width:max-content;max-width:calc(100vw - 38px);font-size:12px}
+ .footer{display:none}
+}
+@media(max-width:360px){
+ .shell{padding-left:10px;padding-right:10px;gap:7px}
+ .cameraShell{min-height:220px}.noCamera .moon{height:70px;width:70px;margin-bottom:4px}
+ .controls{flex-basis:79px;grid-template-columns:1fr 80px 1fr;min-height:79px}.recordBtn{width:72px;height:72px}.recordBtn .inner{height:51px;width:51px}
+ .quickActionBtn,.quickActionBar .powerBtn{font-size:10px}.quickActionBar{gap:5px}.quickActionBtn{gap:4px}
+ .stageThemePick{min-height:70px}
+}
+@media(max-width:700px) and (max-height:700px){
+ .shell{padding-top:max(env(safe-area-inset-top),8px);gap:6px}.topbar{min-height:38px}.cameraShell{min-height:205px}
+ .controls{flex-basis:74px;min-height:74px}.recordBtn{height:68px;width:68px}.recordBtn .inner{height:46px;width:46px}.sideControl{min-height:68px}.circleControl{width:42px;height:42px}
+ .cameraMore>summary{min-height:40px}.quickActionBar,.quickActionBtn,.quickActionBar .powerBtn{min-height:44px}.quickActionBar{flex-basis:44px}
+}
+@media(max-width:700px) and (orientation:landscape){
+ .shell{overflow-y:auto;height:auto;min-height:100dvh;padding-bottom:100px}
+ .view{overflow:visible}.cameraShell{height:50dvh;flex:none;min-height:220px}
+ #view-capture.active{height:auto}.tabs{width:min(calc(100% - 24px),530px)}
+}
+@media(prefers-reduced-motion:reduce){.privacyPanel,.uiSheetBackdrop,.recordBtn,.tab,.quickActionBtn{transition:none!important}}
+
+
+/* v1.6 MoonPlay overlay: entirely independent of camera stream and MediaRecorder. */
+.gameStudio{display:none;position:fixed;inset:0;z-index:110;flex-direction:column;color:#edf1ff;background:#060b1a;overflow:hidden;isolation:isolate;padding:max(env(safe-area-inset-top),12px) max(12px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 10px) max(12px,env(safe-area-inset-left));overscroll-behavior:contain}
+.gameStudio.open{display:flex}.gameStudio button{touch-action:manipulation}
+.gameAmbient{pointer-events:none;position:absolute;inset:-20%;z-index:-1;background:radial-gradient(ellipse at 83% 5%,#2b2253 0,transparent 39%),radial-gradient(ellipse at 0% 87%,#073f51 0,transparent 37%),#080e1d}
+.gameHeader{display:flex;flex:none;justify-content:space-between;align-items:center;min-height:42px;margin:0 auto 9px;width:min(100%,550px)}
+.gameBrand{display:flex;align-items:center;gap:10px}.gameBrandMark{height:38px;width:38px;display:grid;place-items:center;background:linear-gradient(145deg,#9185f8,#423e80);border:1px solid #aaa7ff66;border-radius:13px;box-shadow:0 6px 25px #7668e833}.gameBrandMark svg{height:22px;width:22px}
+.gameBrand strong{display:block;letter-spacing:1.2px;font-size:15px;font-weight:900}.gameBrand strong span{color:#7fe4dd}.gameBrand small{font-size:8px;letter-spacing:1.7px;color:#8e9dbb;font-weight:800}
+.gameClose{height:40px;width:40px;display:grid;place-items:center;border-radius:13px;background:#ffffff10;color:#fff;border:1px solid #ffffff2a}
+.gameStudioBody{display:flex;flex:1;min-height:0;flex-direction:column;gap:9px;width:min(100%,550px);margin:0 auto}
+.gameRecStatus{flex:none;border:1px solid #ffffff25;background:linear-gradient(110deg,#1f213cbb,#111c2dbb);border-radius:17px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;box-shadow:inset 0 1px #ffffff10}
+.gameRecLeft{display:flex;gap:10px;align-items:center;min-width:0}.gameRecLeft strong{display:block;font-size:11px;letter-spacing:1px;white-space:nowrap}.gameRecLeft small{display:block;font-size:9px;color:#9ca9c2;margin-top:4px;max-width:235px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gameRecDot{height:10px;width:10px;flex:none;border-radius:50%;background:#7b839a;box-shadow:0 0 0 5px #ffffff0b}.gameRecDot.live{background:#fc596f;box-shadow:0 0 0 5px #ff596d22,0 0 16px #ff596d77;animation:blink 1s infinite}.gameRecDot.warn{background:#ffd16c;box-shadow:0 0 14px #ffd16c55}
+.gameRecRight{text-align:right;flex:none}.gameRecRight strong{display:block;font-size:15px;font-variant-numeric:tabular-nums;font-weight:900;letter-spacing:.9px}.gameRecRight small{display:block;margin-top:3px;font-size:9px;color:#9ba6c1;font-variant-numeric:tabular-nums}
+.gameSelectHeader{display:flex;justify-content:space-between;align-items:center;padding:0 1px;margin-top:1px}.gameSelectHeader strong{font-size:9px;letter-spacing:1.5px;color:#aeb6d3}.gameSelectHeader small{font-size:9px;color:#a0e5dd}
+.gamePicker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:none}
+.gameChoice{min-height:54px;border:1px solid #39435f;border-radius:15px;background:#1a2236bb;color:#aeb8d0;display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 4px;font-size:11px;font-weight:760;white-space:nowrap}
+.gameChoice.selected{border-color:#ae9eff;background:linear-gradient(150deg,#594d90bb,#263452bb);color:#fff;box-shadow:0 0 0 1px #afa3ff24 inset}.gameEmoji{font-size:17px;line-height:1}
+.gameViewport{flex:1;min-height:145px;position:relative;background:radial-gradient(circle at center,#172744,#080e1d);border-radius:20px;border:1px solid #505b7a;overflow:hidden;box-shadow:0 15px 38px #0009,inset 0 0 40px #10274a}
+#gameFrame{display:block;width:100%;height:100%;border:0;position:absolute;inset:0;background:transparent}
+.gameLoader{display:none;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:8px;background:linear-gradient(135deg,#12192c,#192947);color:#f3f4ff;text-align:center;pointer-events:none;z-index:2}
+.gameLoader.show{display:flex}.gameLoaderGlyph{font-size:36px;color:#c7b9ff;animation:cosmicBreath 2s infinite}.gameLoader strong{font-size:16px}.gameLoader small{font-size:10px;color:#aab6d1}
+.gamePrivacyNote{flex:none;margin:0;color:#99a8c4;font-size:9px;line-height:1.4;text-align:center}.gamePrivacyNote span{color:#75d9cd}
+.gameDock{flex:none;width:min(100%,550px);margin:9px auto 0}.gameDockActions{display:grid;grid-template-columns:1fr 1fr 1.55fr;gap:8px}
+.gameDockSmall,.gameDockRecord{min-height:55px;border-radius:14px;border:1px solid #3e4967;color:#e5e9fb;background:#192137;display:flex;justify-content:center;align-items:center;gap:6px;font-size:11px;font-weight:800;padding:9px 7px}
+.gameDockSmall svg{height:17px;width:17px;color:#a7b4e8}.gameDockRecord{background:linear-gradient(110deg,#eb506a,#ba385a);border-color:#f6829a;box-shadow:0 7px 25px #ea527132;color:white;font-size:12px}
+.gameRecordSymbol{width:16px;height:16px;border-radius:50%;background:#fff;flex:none}.gameDockRecord.recording{background:#49263a;border-color:#b45a72;color:#ffc9d4}.gameDockRecord.recording .gameRecordSymbol{width:14px;height:14px;border-radius:3px;background:#ff9eb0}
+.gameDockRecord:disabled{opacity:.45}.gameDockHint{margin:8px 2px 1px;color:#94a2bc;font-size:9px;line-height:1.5;text-align:center}
+@media(max-width:375px){.gameStudio{padding-left:9px;padding-right:9px}.gameChoice{font-size:10px;gap:4px}.gameEmoji{font-size:15px}.gameDockSmall,.gameDockRecord{font-size:10px}.gameRecStatus{padding:9px 10px}.gamePrivacyNote{font-size:8px}}
+@media(max-height:680px){.gameStudio{padding-top:max(env(safe-area-inset-top),5px)}.gameHeader{margin-bottom:5px;min-height:35px}.gameBrandMark{height:33px;width:33px}.gameRecStatus{padding:7px 11px}.gameSelectHeader{display:none}.gamePicker{gap:5px}.gameChoice{min-height:41px}.gameStudioBody{gap:5px}.gameDock{margin-top:5px}.gameDockActions button{min-height:43px}.gameDockHint{display:none}}
+@media(min-width:701px){.tabs{gap:3px}.gameStudio{padding-top:24px;padding-bottom:24px}}
+
   </style>
 </head>
 <body>
@@ -81,14 +355,23 @@
 <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v.1"/></symbol>
 <symbol id="check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
 <symbol id="moon" viewBox="0 0 24 24"><path d="M20 16A9 9 0 0 1 8 4a9 9 0 1 0 12 12Z"/></symbol>
+
+<symbol id="sparkles" viewBox="0 0 24 24"><path d="m12 3 1.8 6.2L20 11l-6.2 1.8L12 19l-1.8-6.2L4 11l6.2-1.8zM19 18l.8 2.2L22 21l-2.2.8L19 24l-.8-2.2L16 21l2.2-.8z"/></symbol>
+<symbol id="layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5zM3 12l9 5 9-5M3 16l9 5 9-5"/></symbol>
+<symbol id="chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="x" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></symbol>
+<symbol id="gamepad" viewBox="0 0 24 24"><path d="M6.5 8h11a4 4 0 0 1 3.85 3l1.1 4.3a2.3 2.3 0 0 1-3.58 2.45l-2.68-2.05H7.81l-2.68 2.05a2.3 2.3 0 0 1-3.58-2.45l1.1-4.3A4 4 0 0 1 6.5 8Z"/><path d="M7 10.5v4m-2-2h4m6-1h.01m2 2h.01"/></symbol>
+<symbol id="refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5 9a8 8 0 0 1 14-2l1 5M4 12l1 5a8 8 0 0 0 14-2"/></symbol>
+<symbol id="focus" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/><circle cx="12" cy="12" r="3"/></symbol>
 </svg>
 <div class="shell">
   <header class="topbar">
-    <div class="identity"><div class="logo"><svg style="width:26px;height:26px"><use href="#camera"/></svg></div><div><strong>MoonCam <span>Pro</span></strong><small>CAMERA STUDIO · v1.2</small></div></div>
+    <div class="identity"><div class="logo"><svg style="width:26px;height:26px"><use href="#camera"/></svg></div><div><strong>MoonCam <span>Pro</span></strong><small>PLAY & RECORD · v1.6</small></div></div>
     <button class="iconBtn" id="aboutBtn" title="Hướng dẫn" aria-label="Hướng dẫn"><svg><use href="#info"/></svg></button>
   </header>
   <nav class="tabs" aria-label="Điều hướng">
     <button class="tab active" data-view="capture"><svg><use href="#camera"/></svg> Camera</button>
+    <button class="tab" id="gamesNavBtn" type="button" aria-label="Mở trò chơi, vẫn giữ tiến trình quay"><svg><use href="#gamepad"/></svg> Trò chơi</button>
     <button class="tab" data-view="library"><svg><use href="#gallery"/></svg> Thư viện <span id="libraryCount"></span></button>
     <button class="tab" data-view="config"><svg><use href="#settings"/></svg> Cài đặt</button>
   </nav>
@@ -100,7 +383,11 @@
           <div class="moon"></div><h2>Ghi lại mọi khoảnh khắc</h2><p>Camera trực tiếp, quay video và lưu vào iPhone. Chạm để cấp quyền camera.</p>
           <button class="startCamera" id="openCameraBtn">Bật camera <span style="margin-left:6px">↗</span></button>
         </div>
-        <div class="crosshair"></div>
+        <div class="previewMask" id="previewMask" aria-hidden="true">
+          <img id="previewCoverImage" alt=""/>
+          <div class="previewMaskBody"><svg style="height:29px;width:29px"><use href="#moon"/></svg><strong id="maskTitle">Đang che hình xem trước</strong><small>Camera vẫn hoạt động. Ảnh và video được lưu từ dữ liệu gốc, không có lớp che.</small></div>
+        </div>
+        <div class="crosshair"></div><div class="viewfinderCorners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
         <div class="camTop"><span class="pill" id="recordState"><i class="dot"></i><span id="stateText">CHỜ CAMERA</span></span><span class="pill timercap" id="timer">00:00:00</span></div>
         <div class="camBottom"><span id="liveQuality">CHƯA KẾT NỐI</span><span id="micStatus">MIC BẬT</span></div>
       </div>
@@ -109,15 +396,49 @@
         <button id="recordBtn" class="recordBtn" aria-label="Bắt đầu quay video" title="Quay hoặc dừng"><span class="inner"></span></button>
         <button id="photoBtn" class="sideControl" aria-label="Chụp ảnh"><span class="circleControl"><svg><use href="#camera"/></svg></span><span>Chụp ảnh</span></button>
       </div>
-      <div class="powerBar"><button id="cameraPowerBtn" class="powerBtn off" aria-label="Bật camera" aria-pressed="false"><svg><use href="#power"/></svg><span id="cameraPowerLabel">Bật camera</span></button></div>
+      <div class="quickActionBar" aria-label="Truy cập nhanh">
+        <button id="quickEffectsBtn" type="button" class="quickActionBtn" aria-controls="effectsSheet" aria-expanded="false"><svg><use href="#layers"/></svg><span>Hiệu ứng</span></button>
+        <button id="quickStageBtn" type="button" class="quickActionBtn stageShortcut"><svg><use href="#sparkles"/></svg><span>Ẩn camera</span></button>
+        <div class="powerBar"><button id="cameraPowerBtn" class="powerBtn off" aria-label="Bật camera" aria-pressed="false"><svg><use href="#power"/></svg><span id="cameraPowerLabel">Bật camera</span></button></div>
+      </div>
+      <section class="privacyPanel" id="effectsSheet" aria-label="Che hình xem trước" role="dialog" aria-modal="false" aria-hidden="true">
+        <div class="mobileSheetHeader"><span class="mobileSheetHandle" aria-hidden="true"></span><div class="mobileSheetTitle"><div><strong>Hiệu ứng hiển thị</strong><small>Không ảnh hưởng tệp ảnh hoặc video</small></div><button id="closeEffectsBtn" class="sheetCloseBtn" type="button" aria-label="Đóng bảng hiệu ứng"><svg><use href="#x"/></svg></button></div></div>
+        <div class="privacyPanelTitle"><span>Hiển thị camera</span><span class="privacyTag">Chỉ thay đổi màn hình</span></div>
+        <div class="privacyModes" role="group" aria-label="Chọn kiểu hiển thị camera">
+          <button class="privacyMode active" data-privacy="normal" aria-pressed="true">Rõ</button>
+          <button class="privacyMode" data-privacy="blur" aria-pressed="false">Làm mờ</button>
+          <button class="privacyMode" data-privacy="cover" aria-pressed="false">Che kín</button>
+          <button class="privacyMode" data-privacy="image" aria-pressed="false">Đè ảnh</button>
+        </div>
+        <div id="blurControls" class="privacySettings" hidden>
+          <div class="privacySlideLabel"><label for="blurSlider">Độ mờ xem trước</label><output id="blurStrength">18 px</output></div>
+          <input type="range" id="blurSlider" min="4" max="40" step="2" value="18" />
+        </div>
+        <div id="imageControls" class="privacySettings" hidden>
+          <label class="privacyFileLabel" for="coverFile">Chọn ảnh phủ <input type="file" id="coverFile" accept="image/*" aria-label="Chọn ảnh phủ hình xem trước"/></label>
+          <small style="font-size:10px;color:#a4a7c0">Ảnh chỉ phủ giao diện, không chèn vào tệp chụp/quay và không được tải lên máy chủ.</small>
+        </div>
+        <div class="stagePickerLabel"><span>Không gian che toàn màn hình</span><span style="color:#a99bff;font-size:9px">4 CHỦ ĐỀ TƯƠNG TÁC</span></div>
+        <div class="stageThemeTray" aria-label="Chọn chủ đề màn hình che">
+          <button type="button" class="stageThemePick" data-theme="cosmos" aria-pressed="true">Vũ trụ</button>
+          <button type="button" class="stageThemePick" data-theme="cyber" aria-pressed="false">Cyber HUD</button>
+          <button type="button" class="stageThemePick" data-theme="aurora" aria-pressed="false">Cực quang</button>
+          <button type="button" class="stageThemePick" data-theme="retro" aria-pressed="false">Neon City</button>
+        </div>
+        <div class="stageMotionControl"><label for="motionLevel">Hiệu ứng chuyển động</label><select id="motionLevel"><option value="on">Động</option><option value="off">Tĩnh · tiết kiệm hiệu năng</option></select></div>
+        <div class="privacyActions"><button id="fullPrivacyBtn" class="privacyStageBtn" type="button">✦ Mở màn hình động toàn màn hình</button></div>
+        <p class="privacyHelp">Khi đang quay có thể đổi chế độ mà không dừng ghi. Lớp phủ không nằm trong luồng camera hoặc ảnh/video xuất ra.</p>
+      </section>
       <p class="hint" id="captureHint">Bật camera, nhấn nút đỏ để quay và nhấn lại để dừng/lưu video.</p>
       <p id="platformWarning">Bạn đã chuyển sang ứng dụng khác. MoonCam không tự bấm Dừng, nhưng iOS có thể tạm ngưng camera, đóng băng bản ghi hoặc làm mất các khung hình trong thời gian ở nền. Thời gian hiển thị không chứng minh video đã được ghi liên tục. Hãy dừng quay và xem lại tệp trong Thư viện.</p>
       <div id="resumeCard" style="display:none;margin:10px 0;padding:13px 14px;border:1px solid #57465d;border-radius:16px;background:#251f2e;color:#e9d1dc;font-size:12px;line-height:1.6"><strong>Camera đã bị iOS gián đoạn</strong><p style="margin:6px 0 11px">Không thể bảo đảm đoạn video lúc web app chạy nền. Kiểm tra Thư viện hoặc khôi phục bản ghi, rồi bật lại camera.</p><button id="resumeCameraBtn" class="startCamera" style="margin-top:0">Mở lại camera</button></div>
+      <details class="cameraMore" id="cameraMore"><summary><svg><use href="#focus"/></svg><span>Zoom và thông tin camera</span><svg class="moreChevron"><use href="#chevron-down"/></svg></summary>
       <div class="sectionHeader"><h2>Điều khiển nhanh</h2><span id="cameraHardware">Camera sau</span></div>
       <div class="options">
         <div class="optionBlock"><div class="optHead"><label for="zoomSlider">Zoom quang học/phần cứng (nếu có)</label><output id="zoomText">Không khả dụng</output></div><div class="zoomRow"><small>1×</small><input id="zoomSlider" aria-label="Zoom camera" type="range" min="1" max="1" step="0.1" value="1" disabled><small id="zoomLimit">1×</small></div><p style="color:#8d96a8;font-size:10px;line-height:1.5;margin:6px 0 0">Chỉ kích hoạt nếu Safari cho phép điều khiển zoom thật; không tạo zoom ảo trong bản ghi.</p></div>
       </div>
-      <div class="notice"><svg><use href="#warning"/></svg><div><b>Giới hạn của iPhone</b><br>Khi chuyển ứng dụng hoặc khóa màn hình, iOS có thể đình chỉ camera và JavaScript. Bản v1.2 không tự dừng khi web ẩn, nhưng không thể duy trì ghi hình trong nền bằng cách vượt giới hạn iOS. Để chắc chắn lưu đủ video, hãy giữ web app ở phía trước.</div></div>
+      <div class="notice"><svg><use href="#warning"/></svg><div><b>Giới hạn của iPhone</b><br>Khi chuyển ứng dụng hoặc khóa màn hình, iOS có thể đình chỉ camera và JavaScript. MoonCam không tự dừng khi web ẩn, nhưng không thể duy trì ghi hình trong nền bằng cách vượt giới hạn iOS. Để chắc chắn lưu đủ video, hãy giữ web app ở phía trước.</div></div>
+      </details>
     </section>
     <section id="view-library" class="view" aria-label="Thư viện">
       <div class="sectionHeader" style="margin-top:4px"><h2>Video & ảnh đã lưu</h2><span id="countInfo">0 mục</span></div>
@@ -145,22 +466,97 @@
   </main>
   <footer class="footer">MOONCAM PRO · LOCAL FIRST CAMERA · iOS PWA</footer>
 </div>
+<div id="effectsSheetBackdrop" class="uiSheetBackdrop" aria-hidden="true"></div>
+<div id="privacyStage" class="privacyStage immersive theme-cosmos motion-on" role="dialog" aria-modal="true" aria-label="Màn hình che camera tương tác">
+  <div class="stageBackground"></div><div class="stageGrain"></div>
+  <header class="stageHeader">
+    <div class="stageBrand"><span class="stageBrandIcon"><svg><use href="#moon"/></svg></span> MOONSCAPE <span style="color:#a99efa">STUDIO</span></div>
+    <div class="stageTopTag">DISPLAY ONLY <strong>●</strong></div>
+  </header>
+  <div id="stageHero" class="stageHero" aria-label="Khu vực hình động, vuốt trái hoặc phải để đổi chủ đề">
+    <div class="stageArtwork">
+      <div class="stageScene scene-cosmos"><div class="cosmicGlow"></div><div class="orbitRing"></div><div class="orbitRing r2"></div><div class="cosmicPlanet"></div><div class="orbitNode"></div><div id="cosmosStars"></div></div>
+      <div class="stageScene scene-cyber"><div class="hudGrid"></div><div class="hudOuter"></div><div class="hudRing"></div><div class="hudScan"></div><div class="hudCore"></div><span class="hudData a">SYS // 07</span><span class="hudData b">VISUAL / UI</span></div>
+      <div class="stageScene scene-aurora"><div class="auroraRibbon"></div><div class="auroraRibbon r2"></div><div class="auroraMoon"></div><div class="auroraHills back"></div><div class="auroraHills"></div></div>
+      <div class="stageScene scene-retro"><div class="retroSun"></div><div id="retroSkyline"></div><div class="retroHorizon"></div></div>
+      <div id="stageImpact" class="stageImpact"></div>
+    </div>
+    <div class="stageCopy">
+      <div class="stageEyebrow" id="stageEyebrow">EXPLORE THE UNKNOWN</div>
+      <h1 class="stageTitle" id="stageTitle">Beyond the Moon.</h1>
+      <p class="stageSub" id="stageSubtitle">Một vũ trụ đang chuyển động trong lòng bàn tay.</p>
+      <div class="stageClockStrip"><span class="stageClock" id="stageClock">20:47</span><span class="stageDate" id="stageDate">Chủ nhật, 22 tháng 11</span></div>
+    </div>
+    <button type="button" id="stageInteractionBtn" class="stagePulseButton" aria-label="Kích hoạt hiệu ứng trên hình">✧ CHẠM THỬ</button>
+  </div>
+  <div class="stageBottom">
+    <div class="stageMonitor"><div class="stageMonitorLeft"><i id="stageStatusDot" class="privacyLiveDot"></i><span class="stageMonitorText" id="stageStatusText">Camera đang tắt</span></div><span class="stageElapsed" id="stageElapsed">00:00:00</span></div>
+    <nav class="stageThemeNav" aria-label="Đổi chủ đề">
+      <button type="button" class="stageThemeBtn" data-theme="cosmos" aria-pressed="true">✦ Vũ trụ</button>
+      <button type="button" class="stageThemeBtn" data-theme="cyber" aria-pressed="false">◉ Cyber</button>
+      <button type="button" class="stageThemeBtn" data-theme="aurora" aria-pressed="false">◌ Aurora</button>
+      <button type="button" class="stageThemeBtn" data-theme="retro" aria-pressed="false">▤ Neon</button>
+    </nav>
+    <button type="button" class="stageRestoreBtn" id="stageRestoreBtn">↗ Trở lại Camera</button>
+    <div class="stageActionRow">
+      <button type="button" id="stagePhotoBtn">◎ Chụp ảnh</button>
+      <button type="button" id="stageStopBtn">■ Dừng & lưu</button>
+      <button type="button" id="stagePowerBtn">⏻ Tắt camera</button>
+    </div>
+    <p class="stageFoot">Đây là lớp hiển thị, không có trong ảnh/video xuất ra. Chuyển sang ứng dụng iOS khác vẫn có thể làm camera ngừng ghi.</p>
+  </div>
+</div>
+
+<!-- v1.6: games live in a sandboxed iframe. Never change location/reload the parent recorder. -->
+<section class="gameStudio" id="gameStudio" role="dialog" aria-modal="true" aria-hidden="true" aria-label="MoonCam Play & Record">
+  <div class="gameAmbient" aria-hidden="true"></div>
+  <header class="gameHeader">
+    <div class="gameBrand"><div class="gameBrandMark"><svg><use href="#gamepad"/></svg></div><div><strong>MOON<span>PLAY</span></strong><small>PLAY & RECORD / v1.6</small></div></div>
+    <button type="button" class="gameClose" id="gameCloseBtn" aria-label="Đóng trò chơi và quay về camera"><svg><use href="#x"/></svg></button>
+  </header>
+  <div class="gameStudioBody">
+    <section class="gameRecStatus" aria-live="polite" aria-label="Trạng thái ghi hình camera">
+      <div class="gameRecLeft"><span class="gameRecDot" id="gameRecDot"></span><div><strong id="gameRecTitle">CHƯA QUAY</strong><small id="gameRecSubtitle">Camera chưa ghi video</small></div></div>
+      <div class="gameRecRight"><strong id="gameRecTime">00:00:00</strong><small id="gameRecSize">0 MB</small></div>
+    </section>
+    <div class="gameSelectHeader"><strong>CHỌN TRÒ CHƠI</strong><small>Thay game không dừng quay</small></div>
+    <nav class="gamePicker" aria-label="Chọn trò chơi">
+      <button type="button" class="gameChoice selected" data-game="meteor" aria-pressed="true"><span class="gameEmoji">🚀</span><span>Thiên thạch</span></button>
+      <button type="button" class="gameChoice" data-game="merge" aria-pressed="false"><span class="gameEmoji">🧩</span><span>2048</span></button>
+      <button type="button" class="gameChoice" data-game="tap" aria-pressed="false"><span class="gameEmoji">✨</span><span>Săn sao</span></button>
+    </nav>
+    <div class="gameViewport" id="gameViewport">
+      <iframe id="gameFrame" title="Trò chơi MoonCam" sandbox="allow-scripts" referrerpolicy="no-referrer" tabindex="0"></iframe>
+      <div id="gameLoader" class="gameLoader"><span class="gameLoaderGlyph">✦</span><strong>Đang mở trò chơi</strong><small>Camera và bộ ghi video không bị tải lại</small></div>
+    </div>
+    <p class="gamePrivacyNote"><span>◎</span> Game chỉ phủ lên giao diện. Video và ảnh vẫn lấy trực tiếp từ camera gốc.</p>
+  </div>
+  <footer class="gameDock">
+    <div class="gameDockActions">
+      <button type="button" class="gameDockSmall" id="gameRestartBtn"><svg><use href="#refresh"/></svg><span>Chơi lại</span></button>
+      <button type="button" class="gameDockSmall" id="gamePhotoBtn"><svg><use href="#camera"/></svg><span>Chụp ảnh</span></button>
+      <button type="button" class="gameDockRecord" id="gameRecordBtn"><span class="gameRecordSymbol" id="gameRecordSymbol"></span><span id="gameRecordLabel">Bắt đầu quay</span></button>
+    </div>
+    <p class="gameDockHint" id="gameDockHint">Đổi hoặc làm mới game không khởi động lại bộ ghi. Quay nền khi chuyển ứng dụng iOS vẫn bị giới hạn.</p>
+  </footer>
+</section>
+
 <div class="modal" id="mediaModal"><button class="modalClose" id="closeModal">Đóng ✕</button><div id="modalContent"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script>
 'use strict';
 const $ = id=>document.getElementById(id);
-const state={recordStopAt:0,stream:null,recorder:null,mode:'environment',resolution:1080,fps:30,mic:true,wake:true,backup:true,activeDevice:'auto',recordStarted:0,recordId:null,mime:'',chunks:[],chunkTasks:[],seq:0,hiddenDuringRecording:false,backgroundAt:0,backgroundInterrupted:false,pendingCameraShutdown:false,finalizing:false,cameraOpening:false,wakeLock:null,zoomMin:1,zoomMax:1,zoomValue:1,db:null,previewObjectUrl:null};
+const state={recordStopAt:0,stream:null,recorder:null,mode:'environment',resolution:1080,fps:30,mic:true,wake:true,backup:true,activeDevice:'auto',recordStarted:0,recordId:null,mime:'',chunks:[],chunkTasks:[],seq:0,hiddenDuringRecording:false,backgroundAt:0,backgroundInterrupted:false,pendingCameraShutdown:false,finalizing:false,cameraOpening:false,wakeLock:null,zoomMin:1,zoomMax:1,zoomValue:1,db:null,previewObjectUrl:null,privacyMode:"normal",blurStrength:18,coverImageUrl:null,privacyStageActive:false,stageTheme:"cosmos",stageMotion:"on"};
 const safeName=s=>String(s).replace(/[<>"'&]/g,'');
 let toastTimer=0,clockTimer=0;
-function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),4600)}
+function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),/(lỗi|Không thể|không có|không hỗ trợ|cảnh báo|bị ngắt|đã chuyển|chưa có)/i.test(message)?4700:2700)}
 function pad(n){return String(n).padStart(2,'0')}
 function timeFormat(s){s=Math.max(0,Math.floor(s));return `${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}:${pad(s%60)}`}
 function dateName(prefix,ext){const d=new Date;return `${prefix}_${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}.${ext}`}
 function friendlyError(e){if(!window.isSecureContext)return 'Camera cần website HTTPS. Hãy triển khai web lên hosting HTTPS.';if(e?.name==='NotAllowedError')return 'Bạn đã từ chối quyền camera/micro. Hãy cấp quyền cho website trong Safari.';if(e?.name==='NotFoundError')return 'Không tìm thấy camera tương thích.';if(e?.name==='NotReadableError')return 'Camera đang bị ứng dụng khác sử dụng hoặc iOS không cho truy cập.';return e?.message || 'Không thể mở camera.'}
-function setStatus(label,recording=false){$('stateText').textContent=label;$('recordState').classList.toggle('record',recording)}
+function setStatus(label,recording=false){$('stateText').textContent=label;$('recordState').classList.toggle('record',recording);updateGameRecordingUI()}
 function setView(view){if(view!=='capture'&&state.recorder&&state.recorder.state!=='inactive'){toast('Vẫn đang quay trong web app. Không rời sang ứng dụng iOS khác.')}document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.dataset.view===view));document.querySelectorAll('.view').forEach(el=>el.classList.toggle('active',el.id===`view-${view}`));if(view==='library')refreshLibrary();}
-document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+document.querySelectorAll('.tab[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
 function setCameraPowerUI(on){
   const btn=$('cameraPowerBtn');btn.classList.toggle('off',!on);btn.setAttribute('aria-pressed',String(on));
   $('cameraPowerLabel').textContent=on?'Tắt camera':'Bật camera';
@@ -176,6 +572,7 @@ function allTracksStop(){
   $('permissionCover').querySelector('h2').textContent='Camera đang tắt';
   $('permissionCover').querySelector('p').textContent='Camera và micro đã được tắt. Nhấn Bật camera để sử dụng lại.';
   setCameraPowerUI(false);
+  updatePrivacyUI();
 }
 async function powerOffCamera(){
   if(state.pendingCameraShutdown){toast('Đang hoàn tất lưu và tắt camera…');return;}
@@ -191,7 +588,7 @@ $('cameraPowerBtn').addEventListener('click',async()=>{
 });
 function configVideo(){const sizes={720:[1280,720],1080:[1920,1080],2160:[3840,2160]},[w,h]=sizes[state.resolution];const video={width:{ideal:w},height:{ideal:h},frameRate:{ideal:state.fps,max:state.fps}};if(state.activeDevice!=='auto')video.deviceId={ideal:state.activeDevice};else video.facingMode={ideal:state.mode};return video;}
 async function openCamera(){if(state.cameraOpening)return false;if(state.finalizing||state.recorder){toast('Hãy đợi video lưu xong trước khi mở camera.');return false;}if(!navigator.mediaDevices?.getUserMedia){toast('Safari không hỗ trợ camera tại địa chỉ này. Hãy mở qua HTTPS.');return false;}if(state.recorder&&state.recorder.state!=='inactive'){toast('Dừng quay trước khi đổi thiết lập camera.');return false}state.cameraOpening=true;$('cameraPowerBtn').disabled=true;try{allTracksStop();setStatus('ĐANG MỞ...');const request={video:configVideo(),audio:state.mic?{echoCancellation:false,noiseSuppression:false,autoGainControl:false}:false};try{state.stream=await navigator.mediaDevices.getUserMedia(request)}catch(err){if(state.mic&&['NotAllowedError','NotFoundError','OverconstrainedError'].includes(err.name)){const retry=await navigator.mediaDevices.getUserMedia({video:configVideo(),audio:false});state.stream=retry;state.mic=false;updateToggles();toast('Không lấy được quyền micro. Camera được mở không có tiếng.')}else throw err}
- const vid=$('cameraPreview');vid.srcObject=state.stream;await vid.play();$('permissionCover').classList.add('hidden');setStatus('CAMERA LIVE');setCameraPowerUI(true);const vtrack=state.stream.getVideoTracks()[0];vtrack.addEventListener('ended',onTrackEnded);vtrack.addEventListener('mute',onTrackMute);vtrack.addEventListener('unmute',()=>{if(state.recorder&&state.recorder.state==='recording')setStatus('ĐANG QUAY',true)});const s=vtrack.getSettings?.()||{};$('liveQuality').textContent=`${s.width||'?'} × ${s.height||'?'} · ${Math.round(s.frameRate||state.fps)} FPS`;const label=vtrack.label||'Camera iPhone';$('cameraHardware').textContent=label.length>25?label.slice(0,25)+'…':label;updateZoom(vtrack);enumerateCameras();return true;
+ const vid=$('cameraPreview');vid.srcObject=state.stream;await vid.play();$('permissionCover').classList.add('hidden');setStatus('CAMERA LIVE');setCameraPowerUI(true);updatePrivacyUI();const vtrack=state.stream.getVideoTracks()[0];vtrack.addEventListener('ended',onTrackEnded);vtrack.addEventListener('mute',onTrackMute);vtrack.addEventListener('unmute',()=>{if(state.recorder&&state.recorder.state==='recording')setStatus('ĐANG QUAY',true)});const s=vtrack.getSettings?.()||{};$('liveQuality').textContent=`${s.width||'?'} × ${s.height||'?'} · ${Math.round(s.frameRate||state.fps)} FPS`;const label=vtrack.label||'Camera iPhone';$('cameraHardware').textContent=label.length>25?label.slice(0,25)+'…':label;updateZoom(vtrack);enumerateCameras();return true;
  }catch(e){allTracksStop();setStatus('LỖI CAMERA');$('permissionCover').querySelector('p').textContent=friendlyError(e);toast(friendlyError(e));return false}finally{state.cameraOpening=false;$('cameraPowerBtn').disabled=false}}
 function onTrackMute(){if(state.recorder&&state.recorder.state==='recording'){state.hiddenDuringRecording=true;state.backgroundInterrupted=true;setStatus('CAMERA CÓ THỂ ĐANG NGẮT',true);$('platformWarning').style.display='block';if(!document.hidden)toast('Camera bị tạm ngưng: bản ghi có thể thiếu hình ảnh.')}}
 function onTrackEnded(){
@@ -207,21 +604,21 @@ $('zoomSlider').addEventListener('input',async e=>{const t=state.stream?.getVide
 $('openCameraBtn').addEventListener('click',openCamera);
 $('flipBtn').addEventListener('click',async()=>{if(state.recorder&&state.recorder.state!=='inactive'){toast('Hãy dừng quay trước khi đổi camera.');return;}state.mode=state.mode==='environment'?'user':'environment';state.activeDevice='auto';await openCamera()});
 function chooseMime(){if(typeof MediaRecorder==='undefined')return '';const types=['video/mp4;codecs="avc1.42E01E,mp4a.40.2"','video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];return types.find(type=>MediaRecorder.isTypeSupported(type))||'';}
-function setRecordingUI(active){$('cameraPowerBtn').disabled=state.pendingCameraShutdown;$('recordBtn').classList.toggle('recording',active);$('recordBtn').setAttribute('aria-label',active?'Dừng quay':'Bắt đầu quay');$('captureHint').textContent=active?'Đang ghi hình · Nhấn nút vuông đỏ để dừng và lưu.':'Nhấn nút đỏ để quay video mới.';document.querySelectorAll('.seg').forEach(x=>x.disabled=active);$('deviceSelector').disabled=active;$('flipBtn').disabled=active;}
+function setRecordingUI(active){updatePrivacyStageStatus();updateGameRecordingUI();$('cameraPowerBtn').disabled=state.pendingCameraShutdown;$('recordBtn').classList.toggle('recording',active);$('recordBtn').setAttribute('aria-label',active?'Dừng quay':'Bắt đầu quay');$('captureHint').textContent=active?'Đang ghi hình · Nhấn nút vuông đỏ để dừng và lưu.':'Nhấn nút đỏ để quay video mới.';document.querySelectorAll('.seg').forEach(x=>x.disabled=active);$('deviceSelector').disabled=active;$('flipBtn').disabled=active;}
 async function requestWake(){if(!state.wake||!navigator.wakeLock)return;try{state.wakeLock=await navigator.wakeLock.request('screen')}catch{}}
 async function releaseWake(){try{await state.wakeLock?.release()}catch{}state.wakeLock=null}
 async function startRecord(){if(state.finalizing||state.recorder){toast('Đang lưu video trước.');return;}if(!state.stream){const ok=await openCamera();if(!ok)return;}if(typeof MediaRecorder==='undefined'){toast('Phiên bản Safari này không hỗ trợ quay video MediaRecorder.');return}const mime=chooseMime();let rec;try{const opts=mime?{mimeType:mime}:{};opts.videoBitsPerSecond=state.resolution===2160?14000000:state.resolution===1080?6500000:3500000;rec=new MediaRecorder(state.stream,opts)}catch(e){try{rec=new MediaRecorder(state.stream)}catch(err){toast('Không thể khởi tạo ghi hình: '+friendlyError(err));return}}
- state.recorder=rec;state.mime=rec.mimeType||mime||'video/mp4';state.recordId=Date.now()+'-'+Math.random().toString(36).slice(2,8);state.chunks=[];state.chunkTasks=[];state.seq=0;state.hiddenDuringRecording=false;state.backgroundInterrupted=false;state.backgroundAt=0;$('platformWarning').style.display='none';state.recordStarted=Date.now();state.recordStopAt=0;$('resumeCard').style.display='none';const recordId=state.recordId;
+ state.recorder=rec;state.mime=rec.mimeType||mime||'video/mp4';state.recordId=Date.now()+'-'+Math.random().toString(36).slice(2,8);state.chunks=[];state.chunkTasks=[];state.seq=0;state.gameRecordedBytes=0;state.gameLastChunkAt=0;state.hiddenDuringRecording=false;state.backgroundInterrupted=false;state.backgroundAt=0;$('platformWarning').style.display='none';state.recordStarted=Date.now();state.recordStopAt=0;$('resumeCard').style.display='none';const recordId=state.recordId;
  await put('pending',{id:recordId,start:state.recordStarted,mime:state.mime,status:'recording'}).catch(()=>{});
- rec.ondataavailable=e=>{if(!e.data||!e.data.size)return;state.chunks.push(e.data);if(state.backup){const seq=state.seq++;const task=put('chunks',{session:recordId,seq,blob:e.data}).catch(()=>{});state.chunkTasks.push(task)}};
+ rec.ondataavailable=e=>{if(!e.data||!e.data.size)return;state.chunks.push(e.data);state.gameRecordedBytes=(state.gameRecordedBytes||0)+e.data.size;state.gameLastChunkAt=Date.now();if(state.backup){const seq=state.seq++;const task=put('chunks',{session:recordId,seq,blob:e.data}).catch(()=>{});state.chunkTasks.push(task)}};
  rec.onerror=e=>{toast('Lỗi ghi hình: '+(e.error?.message||'Không xác định'));};
  rec.onstop=()=>finishRecord(rec,recordId);
  try{rec.start(2000);setRecordingUI(true);setStatus('ĐANG QUAY',true);clockTimer=setInterval(()=>$('timer').textContent=timeFormat((Date.now()-state.recordStarted)/1000),250);await requestWake()}catch(e){toast('Không bắt đầu quay được: '+friendlyError(e));setRecordingUI(false);setStatus('CAMERA LIVE');state.recorder=null;state.recordId=null;await del('pending',recordId).catch(()=>{})}
 }
 async function stopRecord(){if(!state.recorder||state.recorder.state==='inactive')return;state.finalizing=true;state.recordStopAt=Date.now();try{state.recorder.requestData()}catch{}try{state.recorder.stop()}catch{}setStatus('ĐANG LƯU...');setRecordingUI(false);clearInterval(clockTimer);await releaseWake()}
 async function finishRecord(rec,id){const startedAt=state.recordStarted,duration=Math.max(0,(state.recordStopAt||Date.now())-startedAt);await Promise.allSettled(state.chunkTasks);if(rec!==state.recorder)return;const mime=rec.mimeType||state.mime||'video/mp4';const extension=mime.includes('webm')?'webm':'mp4';const blob=new Blob(state.chunks,{type:mime});if(blob.size){const name=dateName('MoonCam',extension);try{await put('media',{id,name,mime,date:startedAt,type:'video',duration,size:blob.size,blob});toast('Đã lưu video vào thư viện web app. Hãy tải về Tệp/Ảnh để giữ an toàn.')}catch{toast('Không lưu được vào thư viện web. Hãy tải video ngay!');const url=URL.createObjectURL(blob);makeDownload(url,name);setTimeout(()=>URL.revokeObjectURL(url),60000)}}else{toast('Không có dữ liệu video để lưu. Có thể iOS đã ngắt camera.')}
- await Promise.allSettled([del('pending',id),deleteChunks(id)]);state.recorder=null;state.chunks=[];state.chunkTasks=[];state.recordId=null;
- state.finalizing=false;
+ await Promise.allSettled([del('pending',id),deleteChunks(id)]);state.recorder=null;state.chunks=[];state.chunkTasks=[];state.recordId=null;updateGameRecordingUI();
+ state.finalizing=false;updatePrivacyStageStatus();
  if(state.pendingCameraShutdown){state.pendingCameraShutdown=false;allTracksStop();setStatus('CAMERA TẮT');toast(blob.size?'Đã lưu video và tắt camera/micro.':'Đã tắt camera. Video có thể không có dữ liệu.');}
  else if(state.stream?.getVideoTracks()[0]?.readyState==='live'){setStatus('CAMERA LIVE');}else{allTracksStop();setStatus('CAMERA ĐÃ NGẮT');}
  $('cameraPowerBtn').disabled=false;
@@ -231,6 +628,128 @@ async function finishRecord(rec,id){const startedAt=state.recordStarted,duration
 }
 $('recordBtn').addEventListener('click',async()=>{if(state.recorder&&state.recorder.state!=='inactive')await stopRecord();else await startRecord()});
 $('photoBtn').addEventListener('click',async()=>{if(!state.stream){const ok=await openCamera();if(!ok)return}const v=$('cameraPreview');if(!v.videoWidth){toast('Camera chưa có hình ảnh.');return}const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);c.toBlob(async blob=>{if(!blob)return;const item={id:Date.now()+'-photo',name:dateName('MoonCam_Photo','jpg'),mime:'image/jpeg',date:Date.now(),type:'photo',size:blob.size,blob};try{await put('media',item);toast('Đã lưu ảnh vào thư viện web app.')}catch{const url=URL.createObjectURL(blob);makeDownload(url,item.name);setTimeout(()=>URL.revokeObjectURL(url),60000)}},'image/jpeg',.95)});
+
+// UI-only privacy effects. Keep this DOM layer independent of state.stream, MediaRecorder
+// and canvas photo capture; applying CSS filters to DOM video does NOT filter drawImage().
+function loadPrivacyPreferences(){
+  try{const m=localStorage.getItem('mooncam-preview-mode');if(['normal','blur','cover','image'].includes(m))state.privacyMode=m;
+      const b=Number(localStorage.getItem('mooncam-preview-blur'));if(Number.isFinite(b)&&b>=4&&b<=40)state.blurStrength=b;}catch{}
+}
+function updatePrivacyUI(){
+  const live=!!(state.stream&&state.stream.getVideoTracks().some(t=>t.readyState==='live'));
+  const shell=document.querySelector('.cameraShell');
+  const visibleMode=live?state.privacyMode:'normal';
+  shell.classList.toggle('preview-blur',visibleMode==='blur');
+  shell.classList.toggle('preview-cover',visibleMode==='cover');
+  shell.classList.toggle('preview-image',visibleMode==='image');
+  shell.style.setProperty('--preview-blur',state.blurStrength+'px');
+  $('previewMask').classList.toggle('hasImage',!!state.coverImageUrl);
+  $('maskTitle').textContent=visibleMode==='image'&&!state.coverImageUrl?'Chưa có ảnh phủ':'Hình xem trước được che';
+  document.querySelectorAll('[data-privacy]').forEach(btn=>{const on=btn.dataset.privacy===state.privacyMode;btn.classList.toggle('active',on);btn.setAttribute('aria-pressed',String(on))});
+  $('blurControls').hidden=state.privacyMode!=='blur';
+  $('imageControls').hidden=state.privacyMode!=='image';
+  $('blurSlider').value=state.blurStrength;
+  $('blurStrength').textContent=state.blurStrength+' px';
+  updatePrivacyStageStatus();
+}
+function setPrivacyMode(m){
+  if(!['normal','blur','cover','image'].includes(m))return;
+  state.privacyMode=m;
+  try{localStorage.setItem('mooncam-preview-mode',m)}catch{}
+  updatePrivacyUI();
+  toast(m==='normal'?'Đã hiện hình trực tiếp.':m==='blur'?'Đã làm mờ hình xem trước (không ảnh hưởng video).':m==='cover'?'Đã che kín hình xem trước (video vẫn ghi hình gốc).':'Ảnh chỉ đè trên giao diện; video không chứa ảnh phủ.');
+}
+document.querySelectorAll('[data-privacy]').forEach(btn=>btn.addEventListener('click',()=>setPrivacyMode(btn.dataset.privacy)));
+$('blurSlider').addEventListener('input',e=>{state.blurStrength=Number(e.target.value);try{localStorage.setItem('mooncam-preview-blur',String(state.blurStrength))}catch{}updatePrivacyUI()});
+$('coverFile').addEventListener('change',e=>{
+  const file=e.target.files?.[0];if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Hãy chọn một tệp ảnh.');return;}
+  if(state.coverImageUrl)URL.revokeObjectURL(state.coverImageUrl);
+  state.coverImageUrl=URL.createObjectURL(file);$('previewCoverImage').src=state.coverImageUrl;
+  updatePrivacyUI();toast('Đã đặt ảnh che trên giao diện. Tệp ảnh/video xuất ra không thay đổi.');
+});
+
+const stageThemes={
+  cosmos:{eye:'EXPLORE THE UNKNOWN',title:'Beyond the Moon.',sub:'Một vũ trụ đang chuyển động trong lòng bàn tay.'},
+  cyber:{eye:'FUTURE INTERFACE',title:'Neural Horizon.',sub:'Bảng điều khiển giả lập mang cảm hứng khoa học viễn tưởng.'},
+  aurora:{eye:'BREATHE IN COLOUR',title:'Stay in the Moment.',sub:'Thư giãn cùng ánh sáng cực quang và mặt trăng.'},
+  retro:{eye:'MIDNIGHT DRIVE',title:'Neon After Dark.',sub:'Thành phố synthwave với chân trời rực sáng.'}
+};
+const themeOrder=['cosmos','cyber','aurora','retro'];
+function updatePrivacyStageStatus(){
+  if(!$('stageStatusText'))return;
+  const recording=state.recorder?.state==='recording';
+  const live=!!(state.stream?.getVideoTracks()?.[0]?.readyState==='live');
+  $('stageStatusDot').classList.toggle('recording',recording);
+  $('stageStatusText').textContent=state.finalizing?'Đang lưu video…':recording?'Đang ghi hình · Chỉ là giao diện che':live?'Camera đang bật · Chưa ghi':'Camera đang tắt';
+  $('stageStopBtn').disabled=!recording;
+  $('stagePowerBtn').disabled=!live||!!state.pendingCameraShutdown;
+  $('stagePhotoBtn').disabled=!live;
+  $('stageElapsed').textContent=recording?timeFormat((Date.now()-state.recordStarted)/1000):state.finalizing?'ĐANG LƯU':'00:00:00';
+}
+function updateStageTime(){
+  if(!state.privacyStageActive)return;
+  const now=new Date();$('stageClock').textContent=now.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});
+  $('stageDate').textContent=now.toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long'});
+  updatePrivacyStageStatus();
+}
+function setStageTheme(name,quiet=false){
+  if(!stageThemes[name])return;
+  state.stageTheme=name;
+  const stage=$('privacyStage');themeOrder.forEach(t=>stage.classList.toggle('theme-'+t,t===name));
+  document.querySelectorAll('[data-theme]').forEach(btn=>btn.setAttribute('aria-pressed',String(btn.dataset.theme===name)));
+  $('stageEyebrow').textContent=stageThemes[name].eye;
+  $('stageTitle').textContent=stageThemes[name].title;
+  $('stageSubtitle').textContent=stageThemes[name].sub;
+  try{localStorage.setItem('mooncam-stage-theme',name)}catch{}
+  if(!quiet)toast('Đã chuyển giao diện che: '+({cosmos:'Vũ trụ',cyber:'Cyber HUD',aurora:'Cực quang',retro:'Neon City'}[name]));
+}
+function setStageMotion(value){
+  state.stageMotion=value==='off'?'off':'on';
+  const stage=$('privacyStage');stage.classList.toggle('motion-off',state.stageMotion==='off');stage.classList.toggle('motion-on',state.stageMotion==='on');
+  $('motionLevel').value=state.stageMotion;
+  $('stageInteractionBtn').disabled=state.stageMotion==='off';
+  $('stageInteractionBtn').textContent=state.stageMotion==='off'?'ĐÃ TẮT HIỆU ỨNG':'✧ CHẠM THỬ';
+  try{localStorage.setItem('mooncam-stage-motion',state.stageMotion)}catch{}
+}
+function decorateStage(){
+  // Decorative DOM only; never feed this into MediaRecorder/canvas.
+  let stars=$('cosmosStars');let seed=17;
+  function rng(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
+  for(let i=0;i<36;i++){
+    const el=document.createElement('span');el.className='star';el.style.left=(rng()*94+3)+'%';el.style.top=(rng()*94+3)+'%';
+    el.style.setProperty('--dur',(rng()*3+2).toFixed(2)+'s');el.style.setProperty('--alpha',(rng()*.65+.2).toFixed(2));
+    el.style.width=el.style.height=(1+rng()*2.2).toFixed(1)+'px';stars.appendChild(el);
+  }
+  const skyline=$('retroSkyline');let buildings=[[1,35,23],[11,57,28],[22,38,24],[32,80,27],[44,54,23],[54,68,28],[65,42,24],[73,91,28],[86,63,30],[95,47,24]];
+  buildings.forEach(([x,h,w])=>{const el=document.createElement('span');el.className='retroBuilding';el.style.setProperty('--x',x+'%');el.style.setProperty('--h',h+'px');el.style.setProperty('--w',w+'px');skyline.appendChild(el)});
+  let t='cosmos',motion='on';try{t=localStorage.getItem('mooncam-stage-theme')||'cosmos';motion=localStorage.getItem('mooncam-stage-motion')||'on'}catch{}
+  setStageTheme(stageThemes[t]?t:'cosmos',true);
+  setStageMotion(motion);
+}
+let privacyClockTimer=null;
+function closePrivacyStage(){state.privacyStageActive=false;$('privacyStage').classList.remove('show');clearInterval(privacyClockTimer);privacyClockTimer=null}
+$('fullPrivacyBtn').addEventListener('click',()=>{
+  state.privacyStageActive=true;$('privacyStage').classList.add('show');updateStageTime();
+  clearInterval(privacyClockTimer);privacyClockTimer=setInterval(updateStageTime,1000);
+});
+document.querySelectorAll('[data-theme]').forEach(btn=>btn.addEventListener('click',()=>setStageTheme(btn.dataset.theme)));
+$('motionLevel').addEventListener('change',e=>setStageMotion(e.target.value));
+function stageBurst(){const el=$('stageImpact');el.classList.remove('burst');void el.offsetWidth;el.classList.add('burst')}
+$('stageInteractionBtn').addEventListener('click',stageBurst);
+let touchStartX=0;
+$('stageHero').addEventListener('touchstart',e=>{touchStartX=e.changedTouches[0]?.screenX||0},{passive:true});
+$('stageHero').addEventListener('touchend',e=>{
+  const dx=(e.changedTouches[0]?.screenX||0)-touchStartX;
+  if(Math.abs(dx)>55){const n=themeOrder.indexOf(state.stageTheme);setStageTheme(themeOrder[(n+(dx<0?1:3))%4],true)}
+},{passive:true});
+$('stageRestoreBtn').addEventListener('click',closePrivacyStage);
+$('stagePhotoBtn').addEventListener('click',()=>$('photoBtn').click());
+$('stageStopBtn').addEventListener('click',async()=>{if(state.recorder?.state==='recording'){await stopRecord();updatePrivacyStageStatus();toast('Đang kết thúc và lưu video.')}else toast('Không có phiên quay đang hoạt động.');});
+$('stagePowerBtn').addEventListener('click',async()=>{await powerOffCamera();updatePrivacyStageStatus();});
+decorateStage();
+window.addEventListener('pagehide',()=>{if(state.coverImageUrl)URL.revokeObjectURL(state.coverImageUrl)});
+
 function updateToggles(){[['micToggle','mic'],['wakeToggle','wake'],['backupToggle','backup']].forEach(([id,k])=>{$(id).classList.toggle('on',state[k]);$(id).setAttribute('aria-checked',String(state[k]))});$('micStatus').textContent=state.mic?'MIC BẬT':'MIC TẮT'}
 [['micToggle','mic'],['wakeToggle','wake'],['backupToggle','backup']].forEach(([id,k])=>{$(id).addEventListener('click',async()=>{if(k==='mic'&&state.recorder&&state.recorder.state!=='inactive'){toast('Hãy dừng quay trước khi đổi quyền micro.');return}state[k]=!state[k];updateToggles();if(k==='mic'&&state.stream)await openCamera();})});
 function setupSegments(container,attr,prop,output,units){$(container).querySelectorAll('button').forEach(b=>b.addEventListener('click',async()=>{if(state.recorder&&state.recorder.state!=='inactive'){toast('Dừng quay trước khi đổi chất lượng.');return}state[prop]=Number(b.dataset[attr]);$(output).textContent=state[prop]===2160?'4K':String(state[prop])+units;$(container).querySelectorAll('button').forEach(x=>x.classList.toggle('selected',x===b));if(state.stream)await openCamera();}));}
@@ -294,7 +813,122 @@ function element(tag,cls,text){const el=document.createElement(tag);if(cls)el.cl
 function actionBtn(iconName,descr,action){const btn=element('button','miniBtn');btn.setAttribute('aria-label',descr);btn.title=descr;btn.innerHTML=`<svg><use href="#${iconName}"/></svg>`;btn.addEventListener('click',action);return btn}
 async function refreshLibrary(){const media=await all('media').catch(()=>[]);media.sort((a,b)=>b.date-a.date);$('countInfo').textContent=media.length+' mục';$('libraryCount').textContent=media.length?'('+media.length+')':'';$('emptyGallery').style.display=media.length?'none':'block';$('mediaList').replaceChildren();media.forEach(item=>{const row=element('div','mediaItem');const symbol=element('div','mediaIcon');symbol.innerHTML=`<svg><use href="#${item.type==='photo'?'gallery':'record'}"/></svg>`;const info=element('div','mediaInfo');info.append(element('b','',item.name));info.append(element('small','',`${item.type==='photo'?'Ảnh':'Video'} · ${formatBytes(item.size)}${item.duration?' · '+timeFormat(item.duration/1000):''}`));const actions=element('div','mediaActions');actions.append(actionBtn('play','Xem',()=>openMedia(item.id)));actions.append(actionBtn('download','Tải về',()=>downloadMedia(item.id)));actions.append(actionBtn('trash','Xóa',async()=>{if(!confirm('Xóa bản ghi này khỏi bộ nhớ web?'))return;await del('media',item.id).catch(()=>{});refreshLibrary()}));row.append(symbol,info,actions);$('mediaList').append(row)});
  const pending=await all('pending').catch(()=>[]);$('recoveryList').replaceChildren();for(const p of pending){if(state.recordId===p.id)continue;const row=element('div','mediaItem');const ico=element('div','mediaIcon');ico.innerHTML='<svg><use href="#warning"/></svg>';const info=element('div','mediaInfo');info.append(element('b','','Bản ghi bị gián đoạn'));info.append(element('small','',new Date(p.start).toLocaleString('vi-VN')));const acts=element('div','mediaActions');acts.append(actionBtn('download','Thử khôi phục',async()=>{const segments=await chunksFor(p.id);if(!segments.length){toast('Không có dữ liệu tạm để khôi phục.');return}segments.sort((a,b)=>a.seq-b.seq);const mime=p.mime||'video/mp4';const blob=new Blob(segments.map(x=>x.blob),{type:mime});const ext=mime.includes('webm')?'webm':'mp4';const id='recover-'+p.id;await put('media',{id,name:`MoonCam_khoi_phuc_${p.id}.${ext}`,date:p.start,mime,type:'video',size:blob.size,blob}).catch(()=>{});toast('Đã ghép dữ liệu tạm. Video MP4 có thể không phát được nếu thiếu phần kết.');await del('pending',p.id);await deleteChunks(p.id);refreshLibrary()}));acts.append(actionBtn('trash','Xóa dữ liệu tạm',async()=>{if(!confirm('Xóa dữ liệu quay tạm?'))return;await del('pending',p.id);await deleteChunks(p.id);refreshLibrary()}));row.append(ico,info,acts);$('recoveryList').append(row)}}
-(async()=>{updateToggles();if(!window.isSecureContext){$('permissionCover').querySelector('p').textContent='Cần website HTTPS để dùng camera trên iPhone. Mở file HTML trực tiếp sẽ không hoạt động.'}try{await initDB();refreshLibrary()}catch{toast('Không dùng được bộ nhớ cục bộ. Hãy lưu tệp ngay sau khi quay.')};if('serviceWorker'in navigator&&window.isSecureContext){navigator.serviceWorker.register('./sw.js?v=1.2').catch(()=>{})}})();
+(async()=>{loadPrivacyPreferences();updatePrivacyUI();updateToggles();if(!window.isSecureContext){$('permissionCover').querySelector('p').textContent='Cần website HTTPS để dùng camera trên iPhone. Mở file HTML trực tiếp sẽ không hoạt động.'}try{await initDB();refreshLibrary()}catch{toast('Không dùng được bộ nhớ cục bộ. Hãy lưu tệp ngay sau khi quay.')};if('serviceWorker'in navigator&&window.isSecureContext){navigator.serviceWorker.register('./sw.js?v=1.6').catch(()=>{})}})();
+
+// v1.5 mobile UI: purely presentational sheet; camera and recorder logic is unchanged.
+(function setupMobileStudio(){
+  const sheet=$('effectsSheet'), backdrop=$('effectsSheetBackdrop'), trigger=$('quickEffectsBtn');
+  let returnFocus=null;
+  function openSheet(){
+    if(!matchMedia('(max-width:700px)').matches){sheet.scrollIntoView({behavior:'smooth',block:'nearest'});return;}
+    returnFocus=document.activeElement;
+    sheet.classList.add('open');backdrop.classList.add('open');
+    sheet.setAttribute('aria-hidden','false');sheet.setAttribute('aria-modal','true');
+    trigger.setAttribute('aria-expanded','true');
+    document.body.classList.add('sheet-open');
+    $('closeEffectsBtn').focus({preventScroll:true});
+  }
+  function closeSheet(){
+    sheet.classList.remove('open');backdrop.classList.remove('open');
+    sheet.setAttribute('aria-hidden',matchMedia('(max-width:700px)').matches?'true':'false');
+    sheet.setAttribute('aria-modal','false');trigger.setAttribute('aria-expanded','false');
+    document.body.classList.remove('sheet-open');
+    if(returnFocus?.focus)returnFocus.focus({preventScroll:true});
+  }
+  trigger.addEventListener('click',()=>sheet.classList.contains('open')?closeSheet():openSheet());
+  $('closeEffectsBtn').addEventListener('click',closeSheet);
+  backdrop.addEventListener('click',closeSheet);
+  // A natural iOS bottom-sheet gesture: swipe the handle downward to dismiss.
+  let startY=null;
+  const handle=sheet.querySelector('.mobileSheetHeader');
+  handle.addEventListener('touchstart',e=>{startY=e.changedTouches[0]?.clientY??null},{passive:true});
+  handle.addEventListener('touchend',e=>{const endY=e.changedTouches[0]?.clientY??null;if(startY!=null&&endY!=null&&endY-startY>65)closeSheet();startY=null},{passive:true});
+  $('quickStageBtn').addEventListener('click',()=>{closeSheet();$('fullPrivacyBtn').click()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sheet.classList.contains('open')){e.preventDefault();closeSheet()}});
+  document.querySelectorAll('.tab').forEach(el=>el.addEventListener('click',closeSheet));
+  // Theme cards and fullscreen button must still work after closing effects sheet.
+  $('fullPrivacyBtn').addEventListener('click',closeSheet);
+  const mobile=matchMedia('(max-width:700px)');
+  function syncMobile(){if(!mobile.matches){closeSheet();sheet.setAttribute('aria-hidden','false')}}
+  mobile.addEventListener?.('change',syncMobile);syncMobile();
+  // Keep stable accessible description of the capture button in addition to icon state.
+  function reflect(){
+    const live=!!state.stream?.getVideoTracks().some(t=>t.readyState==='live');
+    $('quickStageBtn').setAttribute('aria-label','Mở màn hình che động');
+    $('quickEffectsBtn').setAttribute('aria-label','Mở các chế độ che và làm mờ hình xem trước');
+    $('recordBtn').title=state.recorder?.state==='recording'?'Dừng và lưu video':'Bắt đầu ghi video';
+    // Red dot is driven by existing setStatus() / setRecordingUI() routines.
+  }
+  new MutationObserver(reflect).observe($('recordBtn'),{attributes:true,attributeFilter:['class']});reflect();
+})();
+
+
+
+/* MoonPlay: games run in an isolated sandboxed iframe. Never modify state.stream,
+   state.recorder, cameraPreview or the top-level window location from game actions. */
+(function initGameStudio(){
+ const overlay=$('gameStudio'), frame=$('gameFrame'), loader=$('gameLoader');
+ const names={meteor:'Thiên thạch',merge:'2048',tap:'Săn sao'};
+ const paths={meteor:'./games/meteor.html',merge:'./games/merge.html',tap:'./games/tap.html'};
+ let current='meteor', initial=false;
+ function gameVisible(){return overlay.classList.contains('open')}
+ function loadGame(key){
+   if(!paths[key])return;
+   current=key;initial=true;loader.classList.add('show');
+   document.querySelectorAll('.gameChoice').forEach(b=>{const selected=b.dataset.game===key;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});
+   // ONLY this embedded document navigates. The parent MediaRecorder continues.
+   frame.src=paths[key];
+ }
+ frame.addEventListener('load',()=>{loader.classList.remove('show');if(!gameVisible())frame.contentWindow?.postMessage({type:'moonplay-pause'},'*')});
+ function open(){
+   if($('privacyStage').classList.contains('show'))$('stageRestoreBtn').click();
+   if($('effectsSheet').classList.contains('open'))$('closeEffectsBtn').click();
+   overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');
+   updateGameRecordingUI();
+   if(!initial)loadGame(current);else frame.contentWindow?.postMessage({type:'moonplay-resume'},'*');
+ }
+ function close(){
+   overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');
+   // Pause animation only. Do not stop recording, camera or audio tracks.
+   frame.contentWindow?.postMessage({type:'moonplay-pause'},'*');
+ }
+ $('gamesNavBtn').addEventListener('click',open);
+ $('gameCloseBtn').addEventListener('click',close);
+ document.querySelectorAll('.gameChoice').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.game!==current)loadGame(b.dataset.game)}));
+ $('gameRestartBtn').addEventListener('click',()=>{loadGame(current);toast('Đã khởi động lại '+names[current]+' — không làm mới camera hoặc phiên ghi.');});
+ $('gamePhotoBtn').addEventListener('click',()=>$('photoBtn').click());
+ $('gameRecordBtn').addEventListener('click',async()=>{
+   const b=$('gameRecordBtn');b.disabled=true;
+   try{if(state.recorder&&state.recorder.state!=='inactive'){await stopRecord();}else{await startRecord();}}
+   finally{b.disabled=false;updateGameRecordingUI()}
+ });
+ window.addEventListener('message',e=>{
+   if(e.source!==frame.contentWindow||!e.data||e.data.type!=='moonplay-score'||!names[e.data.game])return;
+   const score=Number(e.data.score);
+   if(!Number.isSafeInteger(score)||score<0||score>99999999)return;
+   try{const key='moonplay-highscore-'+e.data.game;const best=Math.max(Number(localStorage.getItem(key))||0,score);localStorage.setItem(key,String(best))}catch{}
+ });
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gameVisible()){close();e.preventDefault()}});
+ // UI refresh only. Never call .start/.stop or .pause on media recorder here.
+ setInterval(()=>{if(gameVisible())updateGameRecordingUI()},750);
+})();
+function updateGameRecordingUI(){
+ const dot=$('gameRecDot');if(!dot)return;
+ const rec=state.recorder, live=!!state.stream?.getVideoTracks().some(t=>t.readyState==='live'&&!t.muted);
+ const recording=rec?.state==='recording';
+ const stalled=recording&&(!live||state.backgroundInterrupted||state.hiddenDuringRecording);
+ dot.classList.toggle('live',!!recording&&!stalled);
+ dot.classList.toggle('warn',!!stalled);
+ $('gameRecTitle').textContent=state.finalizing?'ĐANG LƯU VIDEO':stalled?'CAMERA CÓ THỂ BỊ NGẮT':recording?'● ĐANG QUAY':live?'CAMERA ĐÃ BẬT':'CHƯA QUAY';
+ $('gameRecSubtitle').textContent=state.finalizing?'Đang ghi tệp vào thư viện…':stalled?'Có thể thiếu khung hình — hãy kiểm tra video':recording?'Trò chơi không xuất hiện trong video':'Khởi động ghi bất cứ lúc nào';
+ $('gameRecTime').textContent=recording?timeFormat((Date.now()-state.recordStarted)/1000):state.finalizing?'ĐANG LƯU':'00:00:00';
+ const size=state.gameRecordedBytes||0;
+ $('gameRecSize').textContent=recording?(size>1048576?(size/1048576).toFixed(1)+' MB dữ liệu':'Đang nhận dữ liệu…'):'Camera gốc';
+ $('gameRecordBtn').classList.toggle('recording',!!recording||state.finalizing);
+ $('gameRecordLabel').textContent=state.finalizing?'Đang lưu…':recording?'Dừng & lưu':'Bắt đầu quay';
+ $('gameRecordBtn').disabled=state.finalizing;
+}
+
 </script>
 </body>
 </html>
