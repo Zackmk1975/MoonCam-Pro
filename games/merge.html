@@ -13,37 +13,184 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-seri
 .tile{min-width:0;min-height:0;border-radius:clamp(7px,2vw,12px);background:#111b32b8;display:flex;align-items:center;justify-content:center;color:white;line-height:1;letter-spacing:-.035em;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums;font-weight:900;box-shadow:inset 0 -2px #00000016;contain:paint}
 .tile.popped{animation:appear .16s ease-out}.tile[data-val="2"]{background:#e4e6ff;color:#2e3654}.tile[data-val="4"]{background:#cfdbff;color:#263963}.tile[data-val="8"]{background:#b4aaff;color:#2c295a}.tile[data-val="16"]{background:#9089ed;color:#fff}.tile[data-val="32"]{background:#6b93ee;color:#fff}.tile[data-val="64"]{background:#4bc2d3;color:#0d3542}.tile[data-val="128"]{background:#8cdbd2;color:#133948}.tile[data-val="256"]{background:#e8cc82;color:#4d381b}.tile[data-val="512"]{background:#f5ac84;color:#4b2d24}.tile[data-val="1024"]{background:#f48d97;color:#4d273e}.tile[data-val="2048"]{background:linear-gradient(135deg,#f5e6a6,#ffba81);color:#55311e;box-shadow:inset 0 1px #fff9,0 0 16px #ffcc8a36}.tile[data-val="4096"],.tile[data-val="8192"],.tile[data-val="16384"],.tile[data-val="32768"],.tile[data-val="65536"],.tile[data-val="131072"]{background:linear-gradient(135deg,#caadff,#f3c3f2);color:#3c2255}
 .message{position:absolute;z-index:3;left:50%;bottom:8px;transform:translateX(-50%);background:#1a2139ed;color:#fff;font-size:12px;font-weight:750;border:1px solid #a7a9d1;padding:8px 12px;border-radius:10px;text-align:center;max-width:94%;white-space:normal;pointer-events:none;box-shadow:0 7px 22px #0009}.message:empty{display:none}
-.actions{flex:none;display:grid;grid-template-columns:minmax(82px,1fr) minmax(0,1.5fr) minmax(82px,1fr);align-items:center;gap:6px;min-height:39px}
-.actions button{min-height:39px;padding:6px 7px;border:1px solid #6875a3;border-radius:11px;color:#f6f4ff;background:#2c3755;font-size:11px;font-weight:800;touch-action:manipulation}
+.actions{flex:none;display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.38fr) minmax(0,.72fr) minmax(0,.88fr);align-items:center;gap:5px;min-height:41px}
+.actions button{min-width:0;min-height:41px;padding:5px 2px;border:1px solid #6875a3;border-radius:11px;color:#f6f4ff;background:#2c3755;font-size:clamp(10px,2.65vw,12px);font-weight:800;touch-action:manipulation;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .actions button.new{background:linear-gradient(115deg,#8576db,#4d91ad);border-color:#b0a7f7;color:#fff}
+.actions button.auto{background:linear-gradient(120deg,#174e62,#145b6e);border-color:#4dc1dd;color:#e5fbff;box-shadow:0 0 0 1px #22c6d515}
+.actions button.auto.active{background:linear-gradient(110deg,#ad5b43,#8c4369);border-color:#eeb5ac;color:#fff4f1}
+.actions button:disabled{opacity:.4;cursor:default}.heading small{overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.statusDot{display:inline-block;width:7px;height:7px;background:#9cb2ca;border-radius:50%;vertical-align:1px;margin-right:3px}.statusDot.on{background:#43e5b6;box-shadow:0 0 8px #43e5b6a0}
+@media (max-width:350px){.actions{gap:3px}.actions button{font-size:10px;padding:4px 1px}.scores>div{min-width:45px;padding:4px}.heading small{max-width:130px}}
 .actions .tip{font-size:clamp(9px,2.4vw,11px);text-align:center;line-height:1.22;color:#b4c7df}.actions button:active{transform:scale(.97)}
 @keyframes appear{0%{transform:scale(.84)}100%{transform:scale(1)}}
 @media(max-height:330px){body{gap:3px;padding:4px}.top{min-height:31px}.heading small{display:none}.actions{min-height:28px}.actions button{min-height:28px}.message{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.tile.popped{animation:none}.actions button:active{transform:none}}
 </style></head><body>
-<header class="top"><div class="heading"><strong>🧩 MOON 2048</strong><small>Ghép các ô để đạt 2048</small></div><div class="scores"><div><small>ĐIỂM</small><b id="score">0</b></div><div><small>KỶ LỤC</small><b id="best">0</b></div></div></header>
+<header class="top"><div class="heading"><strong>🧩 MOON 2048 · AI</strong><small id="aiInfo"><span class="statusDot" id="aiDot"></span><span id="aiText">Chạm Tự chơi để AI giải</span></small></div><div class="scores"><div><small>ĐIỂM</small><b id="score">0</b></div><div><small>KỶ LỤC</small><b id="best">0</b></div></div></header>
 <main class="boardArea" id="area"><div class="board" id="board" role="application" aria-label="Bàn chơi 2048 4 nhân 4. Vuốt ngón tay lên, xuống, trái, phải để di chuyển ô."></div><output class="message" id="message" aria-live="polite"></output></main>
-<footer class="actions"><button type="button" id="undo" aria-label="Hoàn tác lượt gần nhất">↶ Hoàn tác</button><span class="tip">Vuốt trên bàn<br>để di chuyển</span><button type="button" class="new" id="new">↻ Chơi mới</button></footer>
+<footer class="actions"><button type="button" id="undo" aria-label="Hoàn tác lượt gần nhất">↶ Lùi</button><button type="button" class="auto" id="auto" aria-pressed="false" aria-label="Bật tự động chơi 2048 cho tới khi hết nước đi">▶ Tự chơi</button><button type="button" id="speed" title="Tốc độ AI: bấm để thay đổi" aria-label="Chọn tốc độ AI">1×</button><button type="button" class="new" id="new" aria-label="Tạo ván 2048 mới">↻ Mới</button></footer>
 <script>
 'use strict';
 const board=document.getElementById('board'),area=document.getElementById('area'),message=document.getElementById('message');
 const tiles=Array.from({length:16},()=>{let e=document.createElement('div');e.className='tile';board.appendChild(e);return e});
 let cells=Array(16).fill(0),score=0,best=0,won=false,over=false,lastState=null,notifyTimer=0;
+let aiPlaying=false,aiSuspended=false,aiTimer=0,aiTurns=0,aiSpeed=0;const AI_SPEEDS=[{label:'1×',delay:380},{label:'2×',delay:190},{label:'4×',delay:95}];
+const aiBtn=document.getElementById('auto'),aiSpeedBtn=document.getElementById('speed'),aiDot=document.getElementById('aiDot'),aiText=document.getElementById('aiText');
 const measureCanvas=document.createElement('canvas'),measure=measureCanvas.getContext('2d');
 function notify(text,hold=2100){message.textContent=text;clearTimeout(notifyTimer);if(hold)notifyTimer=setTimeout(()=>message.textContent='',hold)}
 function empty(){return cells.flatMap((v,i)=>v?[]:[i])}
 function spawn(){const available=empty();if(!available.length)return;cells[available[Math.floor(Math.random()*available.length)]]=Math.random()<.90?2:4}
 function layout(){const r=area.getBoundingClientRect();const s=Math.max(90,Math.floor(Math.min(r.width-2,r.height-2,456)));board.style.width=s+'px';board.style.height=s+'px';board.style.setProperty('--tile-gap',Math.max(4,Math.min(10,Math.floor(s/43)))+'px');fitNumbers()}
 function fitNumbers(){tiles.forEach(el=>{const str=el.textContent;if(!str)return;const tileW=el.clientWidth;let size=Math.min(40,Math.floor(tileW*.53));while(size>9){measure.font=`900 ${size}px -apple-system,system-ui,sans-serif`;if(measure.measureText(str).width<=tileW*.88)break;size--}el.style.fontSize=size+'px'})}
-function render(previous=[]){tiles.forEach((el,i)=>{const value=cells[i];el.textContent=value||'';el.dataset.val=String(value);el.classList.remove('popped');if(value&&previous[i]!==value){void el.offsetWidth;el.classList.add('popped')}});document.getElementById('score').textContent=score.toLocaleString('vi-VN');best=Math.max(best,score);document.getElementById('best').textContent=best.toLocaleString('vi-VN');document.getElementById('undo').disabled=!lastState;fitNumbers();parent.postMessage({type:'moonplay-score',game:'merge',score:best},'*')}
-function reset(){cells=Array(16).fill(0);score=0;won=false;over=false;lastState=null;clearTimeout(notifyTimer);message.textContent='';spawn();spawn();render();layout()}
-function compact(line){const nonzero=line.filter(Boolean),out=[];for(let i=0;i<nonzero.length;i++){if(nonzero[i]===nonzero[i+1]){const next=nonzero[i]*2;out.push(next);score+=next;i++;if(next>=2048&&!won){won=true;setTimeout(()=>notify('🎉 Đạt 2048! Bạn vẫn có thể chơi tiếp.',3200),100)}}else out.push(nonzero[i])}while(out.length<4)out.push(0);return out}
+function updateAiInfo(){
+ aiBtn.classList.toggle('active',aiPlaying);aiBtn.setAttribute('aria-pressed',String(aiPlaying));
+ aiBtn.textContent=aiPlaying?'⏸ Dừng AI':'▶ Tự chơi';aiSpeedBtn.textContent=AI_SPEEDS[aiSpeed].label;
+ aiDot.classList.toggle('on',aiPlaying&&!aiSuspended);
+ const peak=Math.max(...cells);
+ if(over)aiText.textContent=`Hết nước · cao nhất ${peak.toLocaleString('vi-VN')}`;
+ else if(aiPlaying)aiText.textContent=aiSuspended?'AI tạm dừng khi ẩn game':`AI: ${aiTurns.toLocaleString('vi-VN')} lượt · đỉnh ${peak.toLocaleString('vi-VN')}`;
+ else aiText.textContent=`Đỉnh ${peak.toLocaleString('vi-VN')} · Tự chơi tới hết nước`;
+}
+function render(previous=[]){tiles.forEach((el,i)=>{const value=cells[i];el.textContent=value||'';el.dataset.val=String(value);el.classList.remove('popped');if(value&&previous[i]!==value){void el.offsetWidth;el.classList.add('popped')}});document.getElementById('score').textContent=score.toLocaleString('vi-VN');best=Math.max(best,score);document.getElementById('best').textContent=best.toLocaleString('vi-VN');document.getElementById('undo').disabled=!lastState;fitNumbers();updateAiInfo();parent.postMessage({type:'moonplay-score',game:'merge',score:best},'*')}
+function reset(){clearTimeout(aiTimer);aiTurns=0;cells=Array(16).fill(0);score=0;won=false;over=false;lastState=null;clearTimeout(notifyTimer);message.textContent='';spawn();spawn();render();layout();if(aiPlaying)scheduleAI(220)}
+function compact(line){const nonzero=line.filter(Boolean),out=[];for(let i=0;i<nonzero.length;i++){if(nonzero[i]===nonzero[i+1]){const next=nonzero[i]*2;out.push(next);score+=next;i++;if(next>=2048&&!won){won=true;setTimeout(()=>{if(!over)notify('🎉 Đạt 2048! AI vẫn tiếp tục chơi.',2800)},100)}}else out.push(nonzero[i])}while(out.length<4)out.push(0);return out}
 function hasMoves(){if(cells.includes(0))return true;for(let r=0;r<4;r++)for(let c=0;c<4;c++){const v=cells[r*4+c];if(c<3&&v===cells[r*4+c+1])return true;if(r<3&&v===cells[(r+1)*4+c])return true}return false}
-function move(dir){if(over)return;const before=cells.slice(),previousScore=score,previousWon=won;for(let n=0;n<4;n++){const ids=[];for(let k=0;k<4;k++){if(dir==='left')ids.push(n*4+k);else if(dir==='right')ids.push(n*4+(3-k));else if(dir==='up')ids.push(k*4+n);else ids.push((3-k)*4+n)}const compressed=compact(ids.map(i=>cells[i]));ids.forEach((i,k)=>{cells[i]=compressed[k]})}if(before.every((v,i)=>v===cells[i])){score=previousScore;return}lastState={cells:before,score:previousScore,won:previousWon};spawn();render(before);if(!hasMoves()){over=true;notify('Hết nước đi · Hãy thử ván mới!',0)}}
-function undo(){if(!lastState)return;cells=lastState.cells.slice();score=lastState.score;won=lastState.won;over=false;lastState=null;notify('Đã hoàn tác lượt gần nhất',1250);render()}
-let start=null;board.addEventListener('pointerdown',e=>{start={x:e.clientX,y:e.clientY};try{board.setPointerCapture(e.pointerId)}catch{}});board.addEventListener('pointerup',e=>{if(!start)return;const dx=e.clientX-start.x,dy=e.clientY-start.y;start=null;if(Math.max(Math.abs(dx),Math.abs(dy))<13)return;move(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up'))});board.addEventListener('pointercancel',()=>{start=null});
-window.addEventListener('keydown',e=>{const dir={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(dir){e.preventDefault();move(dir)}else if(e.key.toLowerCase()==='u'){undo()}});
+function move(dir){if(over)return false;const before=cells.slice(),previousScore=score,previousWon=won;for(let n=0;n<4;n++){const ids=[];for(let k=0;k<4;k++){if(dir==='left')ids.push(n*4+k);else if(dir==='right')ids.push(n*4+(3-k));else if(dir==='up')ids.push(k*4+n);else ids.push((3-k)*4+n)}const compressed=compact(ids.map(i=>cells[i]));ids.forEach((i,k)=>{cells[i]=compressed[k]})}if(before.every((v,i)=>v===cells[i])){score=previousScore;return false}lastState={cells:before,score:previousScore,won:previousWon};spawn();render(before);if(!hasMoves()){over=true;stopAI(false);notify('Hết nước đi · AI đã hoàn thành ván!',0);updateAiInfo()}return true}
+function undo(){if(!lastState)return;stopAI(false);cells=lastState.cells.slice();score=lastState.score;won=lastState.won;over=false;lastState=null;notify('Đã hoàn tác lượt gần nhất',1250);render()}
+let start=null;board.addEventListener('pointerdown',e=>{start={x:e.clientX,y:e.clientY};try{board.setPointerCapture(e.pointerId)}catch{}});board.addEventListener('pointerup',e=>{if(!start)return;const dx=e.clientX-start.x,dy=e.clientY-start.y;start=null;if(Math.max(Math.abs(dx),Math.abs(dy))<13)return;(stopAI(false),move(Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up')))});board.addEventListener('pointercancel',()=>{start=null});
+window.addEventListener('keydown',e=>{const dir={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(dir){e.preventDefault();stopAI(false);move(dir)}else if(e.key.toLowerCase()==='u'){undo()}});
 document.getElementById('undo').addEventListener('click',undo);document.getElementById('new').addEventListener('click',reset);
+/* AUTO_AI_START: thuật toán Expectimax giới hạn thời gian, không chạm camera/MediaRecorder. */
+const AI_DIRECTIONS=['left','up','right','down'];
+const AI_LINES=Object.fromEntries(AI_DIRECTIONS.map(d=>[d,Array.from({length:4},(_,n)=>Array.from({length:4},(_,k)=>d==='left'?n*4+k:d==='right'?n*4+3-k:d==='up'?k*4+n:(3-k)*4+n))]));
+const AI_SNAKES=[];
+for(let top of [true,false])for(let left of [true,false])for(let transpose of [false,true]){
+ const order=[];
+ for(let a=0;a<4;a++)for(let k=0;k<4;k++){
+  const x=(!((a%2)===0)?3-k:k), y=a;
+  let xx=left?x:3-x, yy=top?y:3-y;
+  if(transpose)[xx,yy]=[yy,xx];
+  order.push(yy*4+xx);
+ }
+ AI_SNAKES.push(order);
+}
+const AI_WEIGHTS=[16,14,12,10,8,7,6,5,4,3,2.6,2.2,1.7,1.2,.75,.35];
+function simulateAI(src,dir){
+ const next=src.slice();let changed=false,gain=0;
+ for(const line of AI_LINES[dir]){
+  const nonzero=[];for(const i of line)if(src[i])nonzero.push(src[i]);
+  const merged=[];
+  for(let i=0;i<nonzero.length;i++){
+   if(nonzero[i]===nonzero[i+1]){let v=nonzero[i]*2;merged.push(v);gain+=v;i++;}else merged.push(nonzero[i]);
+  }
+  for(let k=0;k<4;k++){const v=merged[k]||0,idx=line[k];if(v!==src[idx])changed=true;next[idx]=v;}
+ }
+ return changed?{grid:next,gain}:null;
+}
+function evalAI(g){
+ let gaps=0,high=0,rough=0,links=0,mon=0,progress=0;const logs=new Float64Array(16);
+ for(let i=0;i<16;i++){const v=g[i];if(!v){gaps++;continue}const l=Math.log2(v);logs[i]=l;high=Math.max(high,v);progress+=l*l*.45;}
+ for(let y=0;y<4;y++){
+  let up=0,down=0;
+  for(let x=0;x<3;x++){
+   const a=y*4+x,b=a+1;
+   if(g[a]&&g[b]){const d=logs[a]-logs[b];rough+=Math.abs(d);if(g[a]===g[b])links+=logs[a];}
+   const d=logs[a]-logs[b];if(d>0)up+=d;else down-=d;
+  }mon+=Math.min(up,down);
+ }
+ for(let x=0;x<4;x++){
+  let up=0,down=0;
+  for(let y=0;y<3;y++){
+   const a=y*4+x,b=a+4;
+   if(g[a]&&g[b]){const d=logs[a]-logs[b];rough+=Math.abs(d);if(g[a]===g[b])links+=logs[a];}
+   const d=logs[a]-logs[b];if(d>0)up+=d;else down-=d;
+  }mon+=Math.min(up,down);
+ }
+ let snake=-Infinity;
+ for(const path of AI_SNAKES){let total=0;for(let k=0;k<16;k++)total+=logs[path[k]]*AI_WEIGHTS[k];if(total>snake)snake=total;}
+ const corner=(g[0]===high||g[3]===high||g[12]===high||g[15]===high);
+ return gaps*95 + Math.log2(gaps+1)*42 + snake*5.7 + links*10 - rough*7 - mon*13 + progress+(corner?50:-55);
+}
+function chooseAIMove(grid){
+ const start=performance.now(),deadline=start+12;let work=0,abort=false;
+ const nodeLimit=4000;
+ function tick(){if((++work&63)===0&&(work>=nodeLimit||performance.now()>deadline))abort=true;return abort;}
+ function chance(g,depth){
+  if(depth<=0||tick())return evalAI(g);
+  const vacant=[];for(let i=0;i<16;i++)if(!g[i])vacant.push(i);
+  if(!vacant.length)return maxTurn(g,depth);
+  // Ít nhánh hơn khi bảng còn nhiều ô trống; giới hạn CPU lúc camera đang ghi.
+  let sampled=vacant;
+  if(vacant.length>6){
+   const idxs=[0,Math.floor((vacant.length-1)*.2),Math.floor((vacant.length-1)*.4),Math.floor((vacant.length-1)*.6),Math.floor((vacant.length-1)*.8),vacant.length-1];
+   sampled=[...new Set(idxs.map(i=>vacant[i]))];
+  }
+  let total=0;
+  for(const at of sampled){
+   const a=g.slice();a[at]=2;const v2=maxTurn(a,depth);
+   a[at]=4;const v4=maxTurn(a,depth);
+   total+=.9*v2+.1*v4;
+   if(abort)break;
+  }
+  return total/Math.max(1,sampled.length);
+ }
+ function maxTurn(g,depth){
+  if(depth<=0||tick())return evalAI(g);
+  let high=-Infinity;
+  for(const d of AI_DIRECTIONS){
+   const next=simulateAI(g,d);if(!next)continue;
+   const val=next.gain*.17+chance(next.grid,depth-1);
+   if(val>high)high=val;
+   if(abort)break;
+  }
+  return high===-Infinity?evalAI(g)-350:high;
+ }
+ function search(depth){
+  let highest=-Infinity,winner=null;
+  for(const d of AI_DIRECTIONS){
+   const next=simulateAI(grid,d);if(!next)continue;
+   const val=next.gain*.17+chance(next.grid,depth-1);
+   if(val>highest){highest=val;winner=d;}
+   if(abort)break;
+  }
+  return winner;
+ }
+ let best=search(2);
+ if(!abort && performance.now()-start<7){let more=search(3);if(!abort&&more)best=more;}
+ return best;
+}
+/* AUTO_AI_END */
+function stopAI(notifyUser=true){
+ clearTimeout(aiTimer);aiTimer=0;
+ if(!aiPlaying)return;
+ aiPlaying=false;updateAiInfo();if(notifyUser)notify('Đã dừng tự chơi. Có thể tiếp tục thủ công.',1750);
+}
+function scheduleAI(delay=AI_SPEEDS[aiSpeed].delay){
+ clearTimeout(aiTimer);aiTimer=0;
+ if(!aiPlaying||aiSuspended||over||document.hidden)return;
+ aiTimer=setTimeout(()=>{
+  aiTimer=0;
+  if(!aiPlaying||aiSuspended||over||document.hidden)return;
+  const direction=chooseAIMove(cells);
+  if(!direction){over=true;stopAI(false);notify('Ván đã kết thúc · Không còn nước đi',0);updateAiInfo();return;}
+  if(move(direction)){aiTurns++;updateAiInfo();}
+  if(aiPlaying&&!over)scheduleAI();
+ },delay);
+}
+function toggleAI(){
+ if(aiPlaying){stopAI();return;}
+ if(over){notify('Hết nước đi, chọn Mới để bắt đầu ván mới.',2500);return;}
+ aiPlaying=true;aiSuspended=false;updateAiInfo();notify('AI tự giải · tiếp tục sau 2048 đến khi hết nước.',2200);scheduleAI(170);
+}
+aiBtn.addEventListener('click',toggleAI);
+aiSpeedBtn.addEventListener('click',()=>{aiSpeed=(aiSpeed+1)%AI_SPEEDS.length;updateAiInfo();if(aiPlaying)scheduleAI();});
+window.addEventListener('message',e=>{
+ if(e.data?.type==='moonplay-pause'){aiSuspended=true;clearTimeout(aiTimer);updateAiInfo()}
+ if(e.data?.type==='moonplay-resume'){aiSuspended=false;updateAiInfo();if(aiPlaying)scheduleAI(100)}
+});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){clearTimeout(aiTimer)}else if(aiPlaying&&!aiSuspended)scheduleAI(120);
+});
 window.addEventListener('message',e=>{if(e.data?.type==='moonplay-best-value'&&e.data.game==='merge'){const n=Number(e.data.best);if(Number.isFinite(n)&&n>=0){best=Math.max(best,n);document.getElementById('best').textContent=best.toLocaleString('vi-VN')}}});
 window.addEventListener('resize',layout);if('ResizeObserver'in window)new ResizeObserver(layout).observe(area);reset();parent.postMessage({type:'moonplay-best-request',game:'merge'},'*');
 </script></body></html>
